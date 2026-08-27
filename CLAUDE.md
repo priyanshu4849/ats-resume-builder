@@ -43,7 +43,7 @@ This is an **AI-Powered ATS Resume Builder** — a MERN stack project. Full scop
 
 Tracking progress against `ats-resume-builder-roadmap.md`. Update this section as days are completed:
 
-- [ ] Day 0 — Setup
+- [x] Day 0 — Setup
 - [ ] Day 1 — Auth Layer
 - [ ] Day 2 — Resume Data Layer (Build From Scratch)
 - [ ] Day 3 — Upload & Parse Existing Resume
