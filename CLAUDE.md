@@ -45,7 +45,7 @@ Tracking progress against `ats-resume-builder-roadmap.md`. Update this section a
 
 - [x] Day 0 — Setup
 - [ ] Day 1 — Auth Layer
-- [ ] Day 2 — Resume Data Layer (Build From Scratch)
+- [x] Day 2 — Resume Data Layer (Build From Scratch)
 - [ ] Day 3 — Upload & Parse Existing Resume
 - [ ] Day 4 — ATS Match Scoring
 - [ ] Day 5 — AI Bullet Rewriting

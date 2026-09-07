@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
+const resumeRoutes = require("./routes/resumes");
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/resumes", resumeRoutes);
 
 mongoose
   .connect(process.env.MONGODB_URI)
