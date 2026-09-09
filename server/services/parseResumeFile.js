@@ -1,16 +1,23 @@
-const pdfParse = require("pdf-parse");
+const path = require("path");
+const { PDFParse } = require("pdf-parse");
 const mammoth = require("mammoth");
 
 async function parseResumeFile(file) {
-  if (file.mimetype === "application/pdf") {
-    const data = await pdfParse(file.buffer);
-    return data.text;
+  const extension = path.extname(file.originalname).toLowerCase();
+  const isPdf = file.mimetype === "application/pdf" || extension === ".pdf";
+  const isDocx =
+    file.mimetype ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    extension === ".docx";
+
+  if (isPdf) {
+    const parser = new PDFParse({ data: file.buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+    return result.text;
   }
 
-  if (
-    file.mimetype ===
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) {
+  if (isDocx) {
     const result = await mammoth.extractRawText({ buffer: file.buffer });
     return result.value;
   }
