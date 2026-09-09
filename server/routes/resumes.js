@@ -1,6 +1,9 @@
 const express = require("express");
 const requireAuth = require("../middleware/auth");
+const upload = require("../middleware/upload");
 const Resume = require("../models/Resume");
+const parseResumeFile = require("../services/parseResumeFile");
+const extractResumeData = require("../services/extractResumeData");
 
 const router = express.Router();
 
@@ -25,6 +28,33 @@ router.post("/", requireAuth, async (req, res) => {
     res.status(201).json({ resume });
   } catch (err) {
     res.status(500).json({ error: "Something went wrong creating the resume" });
+  }
+});
+
+router.post("/upload", requireAuth, upload.single("resumeFile"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "resumeFile is required" });
+    }
+
+    const resumeText = await parseResumeFile(req.file);
+    const extracted = await extractResumeData(resumeText);
+
+    const resume = await Resume.create({
+      userId: req.userId,
+      title: req.file.originalname,
+      source: "uploaded",
+      rawUploadedText: resumeText,
+      personalInfo: extracted.personalInfo,
+      education: extracted.education,
+      experience: extracted.experience,
+      projects: extracted.projects,
+      skills: extracted.skills,
+    });
+
+    res.status(201).json({ resume });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong processing the resume" });
   }
 });
 

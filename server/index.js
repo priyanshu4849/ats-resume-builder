@@ -18,6 +18,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
 
+app.use((err, req, res, next) => {
+  res.status(400).json({ error: err.message || "Something went wrong" });
+});
+
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
