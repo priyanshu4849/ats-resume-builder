@@ -49,5 +49,5 @@ Tracking progress against `ats-resume-builder-roadmap.md`. Update this section a
 - [x] Day 3 — Upload & Parse Existing Resume
 - [x] Day 4 — ATS Match Scoring
 - [x] Day 5 — AI Bullet Rewriting
-- [ ] Day 6 — Frontend: Build + Edit + Analyze UI
+- [x] Day 6 — Frontend: Build + Edit + Analyze UI
 - [ ] Day 7 — PDF Export, Polish, Deploy
