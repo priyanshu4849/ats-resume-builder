@@ -4,6 +4,7 @@ const upload = require("../middleware/upload");
 const Resume = require("../models/Resume");
 const parseResumeFile = require("../services/parseResumeFile");
 const extractResumeData = require("../services/extractResumeData");
+const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 
 const router = express.Router();
 
@@ -55,6 +56,36 @@ router.post("/upload", requireAuth, upload.single("resumeFile"), async (req, res
     res.status(201).json({ resume });
   } catch (err) {
     res.status(500).json({ error: err.message || "Something went wrong processing the resume" });
+  }
+});
+
+router.post("/:id/analyze", requireAuth, async (req, res) => {
+  try {
+    const { jobDescription } = req.body;
+
+    if (!jobDescription) {
+      return res.status(400).json({ error: "jobDescription is required" });
+    }
+
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const result = await scoreResumeAgainstJD(resume, jobDescription);
+
+    resume.atsAnalyses.push({
+      jdText: jobDescription,
+      matchScore: result.matchScore,
+      missingKeywords: result.missingKeywords,
+      weakBullets: result.weakBullets,
+    });
+    await resume.save();
+
+    const analysis = resume.atsAnalyses[resume.atsAnalyses.length - 1];
+    res.status(201).json({ analysis });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong analyzing the resume" });
   }
 });
 

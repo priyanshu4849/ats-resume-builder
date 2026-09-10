@@ -46,6 +46,20 @@ const resumeSchema = new mongoose.Schema(
       },
     ],
     skills: [{ type: String }],
+    atsAnalyses: [
+      {
+        jdText: { type: String, required: true },
+        matchScore: { type: Number, required: true },
+        missingKeywords: [{ type: String }],
+        weakBullets: [
+          {
+            text: { type: String },
+            reason: { type: String },
+          },
+        ],
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     source: {
       type: String,
       enum: ["scratch", "uploaded"],
