@@ -5,6 +5,7 @@ const Resume = require("../models/Resume");
 const parseResumeFile = require("../services/parseResumeFile");
 const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
+const rewriteBullet = require("../services/rewriteBullet");
 
 const router = express.Router();
 
@@ -86,6 +87,26 @@ router.post("/:id/analyze", requireAuth, async (req, res) => {
     res.status(201).json({ analysis });
   } catch (err) {
     res.status(500).json({ error: err.message || "Something went wrong analyzing the resume" });
+  }
+});
+
+router.post("/:id/rewrite-bullet", requireAuth, async (req, res) => {
+  try {
+    const { bulletText, jobDescription } = req.body;
+
+    if (!bulletText || !jobDescription) {
+      return res.status(400).json({ error: "bulletText and jobDescription are required" });
+    }
+
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const suggestion = await rewriteBullet(bulletText, jobDescription);
+    res.json({ suggestion });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong rewriting the bullet" });
   }
 });
 
