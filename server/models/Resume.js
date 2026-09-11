@@ -46,6 +46,11 @@ const resumeSchema = new mongoose.Schema(
       },
     ],
     skills: [{ type: String }],
+    template: {
+      type: String,
+      enum: ["classic", "modern", "minimal"],
+      default: "classic",
+    },
     atsAnalyses: [
       {
         jdText: { type: String, required: true },

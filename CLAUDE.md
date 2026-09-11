@@ -50,4 +50,5 @@ Tracking progress against `ats-resume-builder-roadmap.md`. Update this section a
 - [x] Day 4 — ATS Match Scoring
 - [x] Day 5 — AI Bullet Rewriting
 - [x] Day 6 — Frontend: Build + Edit + Analyze UI
-- [ ] Day 7 — PDF Export, Polish, Deploy
+- [x] Day 7a — PDF Export (ATS-safe template + puppeteer, `GET /api/resumes/:id/export-pdf`, "Download PDF" button)
+- [ ] Day 7b — Polish, Deploy (backend + frontend, live link)

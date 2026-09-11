@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
@@ -27,17 +28,22 @@ export function UploadPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-semibold text-slate-900 mb-2">Upload an existing resume</h1>
-      <p className="text-slate-600 mb-6">
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+        Upload an existing resume
+      </h1>
+      <p className="text-slate-600 dark:text-slate-400 mb-6">
         PDF or DOCX, up to 5MB. We'll extract the text and structure it into editable sections.
       </p>
 
-      <form
+      <motion.form
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
         onSubmit={handleSubmit}
-        className="bg-white border border-slate-200 rounded-lg p-6 max-w-md"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 max-w-md"
       >
         {error && (
-          <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-3 py-2">
             {error}
           </p>
         )}
@@ -46,17 +52,19 @@ export function UploadPage() {
           type="file"
           accept=".pdf,.docx"
           onChange={(e) => setFile(e.target.files[0])}
-          className="block w-full mb-4 text-sm text-slate-600"
+          className="block w-full mb-4 text-sm text-slate-600 dark:text-slate-400"
         />
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={!file || uploading}
-          className="w-full bg-slate-900 text-white py-2 rounded-md font-medium hover:bg-slate-800 disabled:opacity-50"
+          className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-2 rounded-md font-medium hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50"
         >
           {uploading ? "Processing..." : "Upload and parse"}
-        </button>
-      </form>
+        </motion.button>
+      </motion.form>
     </Layout>
   );
 }

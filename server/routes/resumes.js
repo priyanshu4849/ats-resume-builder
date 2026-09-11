@@ -7,6 +7,7 @@ const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const rewriteBullet = require("../services/rewriteBullet");
 const generateResumePDF = require("../services/generateResumePDF");
+const { TEMPLATE_NAMES } = require("../services/templates");
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ const ALLOWED_UPDATE_FIELDS = [
   "experience",
   "projects",
   "skills",
+  "template",
 ];
 
 router.post("/", requireAuth, async (req, res) => {
@@ -139,7 +141,8 @@ router.get("/:id/export-pdf", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Resume not found" });
     }
 
-    const pdfBuffer = await generateResumePDF(resume);
+    const requestedTemplate = TEMPLATE_NAMES.includes(req.query.template) ? req.query.template : undefined;
+    const pdfBuffer = await generateResumePDF(resume, requestedTemplate);
 
     const filename = `${(resume.personalInfo?.name || resume.title || "resume").replace(/[^a-z0-9]+/gi, "_")}.pdf`;
     res.set({

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
@@ -7,6 +8,12 @@ import { api } from "../api/client";
 const emptyEducation = { school: "", degree: "", startDate: "", endDate: "", gpa: "" };
 const emptyExperience = { company: "", role: "", startDate: "", endDate: "", bulletsText: "" };
 const emptyProject = { name: "", techStackText: "", bulletsText: "", link: "" };
+
+const TEMPLATES = [
+  { value: "classic", label: "Classic", description: "Plain black & white, timeless ATS format" },
+  { value: "modern", label: "Modern", description: "Accent color, section bars, skill pills" },
+  { value: "minimal", label: "Minimal", description: "Compact spacing, fits more on one page" },
+];
 
 function toBulletsArray(text) {
   return text
@@ -38,6 +45,7 @@ export function ResumeEditorPage() {
   const [education, setEducation] = useState([]);
   const [experience, setExperience] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [template, setTemplate] = useState("classic");
 
   useEffect(() => {
     loadResume();
@@ -64,6 +72,7 @@ export function ResumeEditorPage() {
           bulletsText: (proj.bullets || []).join("\n"),
         }))
       );
+      setTemplate(resume.template || "classic");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -83,18 +92,6 @@ export function ResumeEditorPage() {
       flashSaved();
     } catch (err) {
       setError(err.message);
-    }
-  }
-
-  async function handleExportPDF() {
-    setError("");
-    setExporting(true);
-    try {
-      await api.exportResumePDF(id, token);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setExporting(false);
     }
   }
 
@@ -135,10 +132,27 @@ export function ResumeEditorPage() {
     );
   }
 
+  async function handleSelectTemplate(value) {
+    setTemplate(value);
+    saveField("template", value);
+  }
+
+  async function handleExportPDF() {
+    setError("");
+    setExporting(true);
+    try {
+      await api.exportResumePDF(id, token, template);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
-        <p className="text-slate-500">Loading...</p>
+        <p className="text-slate-500 dark:text-slate-400">Loading...</p>
       </Layout>
     );
   }
@@ -146,28 +160,58 @@ export function ResumeEditorPage() {
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate("/dashboard")} className="text-sm text-slate-600 hover:text-slate-900">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+        >
           &larr; Back to dashboard
         </button>
         <div className="flex items-center gap-3">
-          {savedMessage && <span className="text-sm text-green-600">{savedMessage}</span>}
-          <button
+          {savedMessage && (
+            <span className="text-sm text-green-600 dark:text-green-400">{savedMessage}</span>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={handleExportPDF}
             disabled={exporting}
-            className="text-sm font-medium border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-100 disabled:opacity-50"
+            className="text-sm font-medium border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-slate-900 dark:text-slate-100"
           >
             {exporting ? "Generating..." : "Download PDF"}
-          </button>
+          </motion.button>
           <Link
             to={`/resumes/${id}/analyze`}
-            className="text-sm font-medium bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-slate-800"
+            className="text-sm font-medium bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-800 dark:hover:bg-white"
           >
             Analyze against a job
           </Link>
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+
+      {/* Template */}
+      <Section title="PDF Template">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {TEMPLATES.map((t) => (
+            <motion.button
+              key={t.value}
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSelectTemplate(t.value)}
+              className={`text-left rounded-lg border p-3 transition-colors ${
+                template === t.value
+                  ? "border-slate-900 dark:border-slate-100 ring-2 ring-slate-900 dark:ring-slate-100 bg-slate-50 dark:bg-slate-800"
+                  : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              }`}
+            >
+              <div className="font-medium text-slate-900 dark:text-slate-100">{t.label}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.description}</div>
+            </motion.button>
+          ))}
+        </div>
+      </Section>
 
       {/* Title */}
       <Section title="Resume Title" onSave={saveTitle}>
@@ -175,7 +219,7 @@ export function ResumeEditorPage() {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
         />
       </Section>
 
@@ -189,7 +233,7 @@ export function ResumeEditorPage() {
               placeholder={field}
               value={personalInfo[field] || ""}
               onChange={(e) => setPersonalInfo({ ...personalInfo, [field]: e.target.value })}
-              className="px-3 py-2 border border-slate-300 rounded-md"
+              className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
             />
           ))}
         </div>
@@ -202,49 +246,52 @@ export function ResumeEditorPage() {
           placeholder="Comma-separated, e.g. JavaScript, React, Node.js"
           value={skillsText}
           onChange={(e) => setSkillsText(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-md"
+          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
         />
       </Section>
 
       {/* Education */}
       <Section title="Education" onSave={saveEducation}>
         {education.map((entry, i) => (
-          <div key={i} className="border border-slate-200 rounded-md p-3 mb-3 space-y-2">
+          <div
+            key={i}
+            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
+          >
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="School"
                 value={entry.school || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "school", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="Degree"
                 value={entry.degree || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "degree", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "startDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "endDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="GPA"
                 value={entry.gpa || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "gpa", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
             </div>
             <RemoveButton onClick={() => removeArrayItem(setEducation, i)} />
@@ -256,35 +303,38 @@ export function ResumeEditorPage() {
       {/* Experience */}
       <Section title="Experience" onSave={saveExperience}>
         {experience.map((entry, i) => (
-          <div key={i} className="border border-slate-200 rounded-md p-3 mb-3 space-y-2">
+          <div
+            key={i}
+            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
+          >
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="Company"
                 value={entry.company || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "company", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="Role"
                 value={entry.role || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "role", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "startDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "endDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
             </div>
             <textarea
@@ -292,7 +342,7 @@ export function ResumeEditorPage() {
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setExperience, i, "bulletsText", e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
             />
             <RemoveButton onClick={() => removeArrayItem(setExperience, i)} />
           </div>
@@ -306,21 +356,24 @@ export function ResumeEditorPage() {
       {/* Projects */}
       <Section title="Projects" onSave={saveProjects}>
         {projects.map((entry, i) => (
-          <div key={i} className="border border-slate-200 rounded-md p-3 mb-3 space-y-2">
+          <div
+            key={i}
+            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
+          >
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="Project name"
                 value={entry.name || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "name", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
               <input
                 type="text"
                 placeholder="Link"
                 value={entry.link || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "link", e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
               />
             </div>
             <input
@@ -328,14 +381,14 @@ export function ResumeEditorPage() {
               placeholder="Tech stack, comma-separated"
               value={entry.techStackText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "techStackText", e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
             />
             <textarea
               placeholder="One bullet point per line"
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "bulletsText", e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
             />
             <RemoveButton onClick={() => removeArrayItem(setProjects, i)} />
           </div>
@@ -356,24 +409,34 @@ function removeArrayItem(setter, index) {
 
 function Section({ title, onSave, children }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 mb-6"
+    >
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-slate-900">{title}</h2>
-        <button
-          onClick={onSave}
-          className="text-sm font-medium text-slate-900 border border-slate-300 rounded-md px-3 py-1 hover:bg-slate-100"
-        >
-          Save
-        </button>
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        {onSave && (
+          <button
+            onClick={onSave}
+            className="text-sm font-medium text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-1 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            Save
+          </button>
+        )}
       </div>
       {children}
-    </div>
+    </motion.div>
   );
 }
 
 function AddButton({ onClick, label }) {
   return (
-    <button onClick={onClick} className="text-sm text-slate-600 hover:text-slate-900 font-medium">
+    <button
+      onClick={onClick}
+      className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-medium"
+    >
       + {label}
     </button>
   );
@@ -381,7 +444,10 @@ function AddButton({ onClick, label }) {
 
 function RemoveButton({ onClick }) {
   return (
-    <button onClick={onClick} className="text-xs text-red-600 hover:text-red-800 font-medium">
+    <button
+      onClick={onClick}
+      className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+    >
       Remove
     </button>
   );

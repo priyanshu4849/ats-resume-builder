@@ -1,8 +1,8 @@
 const puppeteer = require("puppeteer");
-const renderResumeHTML = require("./resumeTemplate");
+const { renderResumeHTML } = require("./templates");
 
-async function generateResumePDF(resume) {
-  const html = renderResumeHTML(resume);
+async function generateResumePDF(resume, templateName) {
+  const html = renderResumeHTML(resume, templateName);
 
   // --no-sandbox is needed on most container hosts (Render/Railway run as root,
   // which breaks Chromium's sandbox); harmless locally too.

@@ -1,30 +1,9 @@
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function dateRange(startDate, endDate) {
-  const start = escapeHtml(startDate);
-  const end = escapeHtml(endDate);
-  if (!start && !end) return "";
-  if (!end) return start;
-  if (!start) return end;
-  return `${start} - ${end}`;
-}
+const { escapeHtml, dateRange, renderContactLine } = require("./shared");
 
 function renderBullets(bullets = []) {
   const items = bullets.filter(Boolean);
   if (items.length === 0) return "";
   return `<ul>${items.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`;
-}
-
-function renderContactLine(personalInfo = {}) {
-  const parts = [personalInfo.email, personalInfo.phone, personalInfo.linkedin, personalInfo.github]
-    .filter(Boolean)
-    .map(escapeHtml);
-  return parts.join(" | ");
 }
 
 function renderEducation(education = []) {
@@ -34,11 +13,7 @@ function renderEducation(education = []) {
       const range = dateRange(edu.startDate, edu.endDate);
       return `
         <div class="entry">
-          <div class="entry-header">
-            <span class="entry-title">${escapeHtml(edu.school)}</span>
-            ${range ? `<span class="entry-dates">${range}</span>` : ""}
-          </div>
-          <div class="entry-subtitle">${escapeHtml(edu.degree)}${edu.gpa ? ` — GPA: ${escapeHtml(edu.gpa)}` : ""}</div>
+          <div class="entry-line"><span class="entry-title">${escapeHtml(edu.school)} — ${escapeHtml(edu.degree)}${edu.gpa ? ` (GPA: ${escapeHtml(edu.gpa)})` : ""}</span>${range ? `<span class="entry-dates">${range}</span>` : ""}</div>
         </div>`;
     })
     .join("");
@@ -52,10 +27,7 @@ function renderExperience(experience = []) {
       const range = dateRange(exp.startDate, exp.endDate);
       return `
         <div class="entry">
-          <div class="entry-header">
-            <span class="entry-title">${escapeHtml(exp.role)}${exp.company ? `, ${escapeHtml(exp.company)}` : ""}</span>
-            ${range ? `<span class="entry-dates">${range}</span>` : ""}
-          </div>
+          <div class="entry-line"><span class="entry-title">${escapeHtml(exp.role)}${exp.company ? `, ${escapeHtml(exp.company)}` : ""}</span>${range ? `<span class="entry-dates">${range}</span>` : ""}</div>
           ${renderBullets(exp.bullets)}
         </div>`;
     })
@@ -70,10 +42,7 @@ function renderProjects(projects = []) {
       const stack = (proj.techStack || []).filter(Boolean).map(escapeHtml).join(", ");
       return `
         <div class="entry">
-          <div class="entry-header">
-            <span class="entry-title">${escapeHtml(proj.name)}${stack ? ` | ${stack}` : ""}</span>
-          </div>
-          ${proj.link ? `<div class="entry-subtitle">${escapeHtml(proj.link)}</div>` : ""}
+          <div class="entry-line"><span class="entry-title">${escapeHtml(proj.name)}</span>${stack ? ` <span class="stack">(${stack})</span>` : ""}</div>
           ${renderBullets(proj.bullets)}
         </div>`;
     })
@@ -87,7 +56,7 @@ function renderSkills(skills = []) {
   return `<section><h2>Skills</h2><p>${items.map(escapeHtml).join(", ")}</p></section>`;
 }
 
-function renderResumeHTML(resume) {
+function renderMinimalTemplate(resume) {
   const personalInfo = resume.personalInfo || {};
   const name = escapeHtml(personalInfo.name || resume.title || "Resume");
   const contactLine = renderContactLine(personalInfo);
@@ -98,59 +67,58 @@ function renderResumeHTML(resume) {
 <meta charset="utf-8" />
 <title>${name}</title>
 <style>
-  @page { margin: 0.6in; }
+  @page { margin: 0.5in; }
   * { box-sizing: border-box; }
   body {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10.5pt;
-    color: #111;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 9.5pt;
+    color: #000;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.35;
   }
   h1 {
-    font-size: 18pt;
-    margin: 0 0 4px 0;
+    font-size: 15pt;
+    margin: 0 0 2px 0;
   }
   .contact-line {
-    font-size: 9.5pt;
-    margin-bottom: 16px;
+    font-size: 8.5pt;
+    color: #333;
+    margin-bottom: 10px;
   }
   h2 {
-    font-size: 11pt;
+    font-size: 9.5pt;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #111;
-    margin: 14px 0 8px 0;
-    padding-bottom: 2px;
+    letter-spacing: 0.6px;
+    margin: 9px 0 4px 0;
+    color: #000;
   }
   section:first-of-type h2 {
     margin-top: 0;
   }
   .entry {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
   }
-  .entry-header {
+  .entry-line {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
   }
   .entry-title {
     font-weight: bold;
   }
-  .entry-dates {
+  .stack {
     font-weight: normal;
+    color: #444;
+  }
+  .entry-dates {
+    color: #444;
     white-space: nowrap;
   }
-  .entry-subtitle {
-    font-style: italic;
-    margin-top: 1px;
-  }
   ul {
-    margin: 4px 0 0 0;
-    padding-left: 18px;
+    margin: 2px 0 0 0;
+    padding-left: 15px;
   }
   li {
-    margin-bottom: 2px;
+    margin-bottom: 0px;
   }
   p {
     margin: 0;
@@ -168,4 +136,4 @@ function renderResumeHTML(resume) {
 </html>`;
 }
 
-module.exports = renderResumeHTML;
+module.exports = renderMinimalTemplate;

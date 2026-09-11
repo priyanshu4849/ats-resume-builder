@@ -40,8 +40,9 @@ async function uploadResumeFile(file, token) {
   return data;
 }
 
-async function exportResumePDF(id, token) {
-  const res = await fetch(`${BASE_URL}/resumes/${id}/export-pdf`, {
+async function exportResumePDF(id, token, template) {
+  const query = template ? `?template=${encodeURIComponent(template)}` : "";
+  const res = await fetch(`${BASE_URL}/resumes/${id}/export-pdf${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 

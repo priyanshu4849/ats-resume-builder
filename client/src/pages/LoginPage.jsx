@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
+import { ThemeToggle } from "../components/ThemeToggle";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,52 +27,68 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <form
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <motion.form
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
         onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white p-8 rounded-xl shadow-sm border border-slate-200"
+        className="w-full max-w-sm bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800"
       >
-        <h1 className="text-xl font-semibold text-slate-900 mb-6">Log in</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">Log in</h1>
 
         {error && (
-          <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-3 py-2"
+          >
             {error}
-          </p>
+          </motion.p>
         )}
 
-        <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Email
+        </label>
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+          className="w-full mb-4 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
         />
 
-        <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Password
+        </label>
         <input
           type="password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+          className="w-full mb-6 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
         />
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={loading}
-          className="w-full bg-slate-900 text-white py-2 rounded-md font-medium hover:bg-slate-800 disabled:opacity-50"
+          className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-2 rounded-md font-medium hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50"
         >
           {loading ? "Logging in..." : "Log in"}
-        </button>
+        </motion.button>
 
-        <p className="mt-4 text-sm text-slate-600 text-center">
+        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 text-center">
           No account?{" "}
-          <Link to="/register" className="text-slate-900 font-medium underline">
+          <Link to="/register" className="text-slate-900 dark:text-slate-100 font-medium underline">
             Register
           </Link>
         </p>
-      </form>
+      </motion.form>
     </div>
   );
 }
