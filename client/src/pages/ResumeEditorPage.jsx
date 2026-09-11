@@ -30,6 +30,7 @@ export function ResumeEditorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const [title, setTitle] = useState("");
   const [personalInfo, setPersonalInfo] = useState({});
@@ -82,6 +83,18 @@ export function ResumeEditorPage() {
       flashSaved();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function handleExportPDF() {
+    setError("");
+    setExporting(true);
+    try {
+      await api.exportResumePDF(id, token);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -138,6 +151,13 @@ export function ResumeEditorPage() {
         </button>
         <div className="flex items-center gap-3">
           {savedMessage && <span className="text-sm text-green-600">{savedMessage}</span>}
+          <button
+            onClick={handleExportPDF}
+            disabled={exporting}
+            className="text-sm font-medium border border-slate-300 px-3 py-1.5 rounded-md hover:bg-slate-100 disabled:opacity-50"
+          >
+            {exporting ? "Generating..." : "Download PDF"}
+          </button>
           <Link
             to={`/resumes/${id}/analyze`}
             className="text-sm font-medium bg-slate-900 text-white px-3 py-1.5 rounded-md hover:bg-slate-800"

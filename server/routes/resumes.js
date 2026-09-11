@@ -6,6 +6,7 @@ const parseResumeFile = require("../services/parseResumeFile");
 const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const rewriteBullet = require("../services/rewriteBullet");
+const generateResumePDF = require("../services/generateResumePDF");
 
 const router = express.Router();
 
@@ -128,6 +129,26 @@ router.get("/:id", requireAuth, async (req, res) => {
     res.json({ resume });
   } catch (err) {
     res.status(500).json({ error: "Something went wrong fetching the resume" });
+  }
+});
+
+router.get("/:id/export-pdf", requireAuth, async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const pdfBuffer = await generateResumePDF(resume);
+
+    const filename = `${(resume.personalInfo?.name || resume.title || "resume").replace(/[^a-z0-9]+/gi, "_")}.pdf`;
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    });
+    res.send(pdfBuffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong generating the PDF" });
   }
 });
 

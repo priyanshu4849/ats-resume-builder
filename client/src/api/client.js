@@ -40,6 +40,31 @@ async function uploadResumeFile(file, token) {
   return data;
 }
 
+async function exportResumePDF(id, token) {
+  const res = await fetch(`${BASE_URL}/resumes/${id}/export-pdf`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Something went wrong generating the PDF");
+  }
+
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const filenameMatch = disposition.match(/filename="([^"]+)"/);
+  const filename = filenameMatch ? filenameMatch[1] : "resume.pdf";
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export const api = {
   register: (body) => request("/auth/register", { method: "POST", body }),
   login: (body) => request("/auth/login", { method: "POST", body }),
@@ -60,4 +85,5 @@ export const api = {
       body: { bulletText, jobDescription },
       token,
     }),
+  exportResumePDF,
 };
