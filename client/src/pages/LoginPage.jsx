@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { AuthIllustration } from "../components/AuthIllustration";
+import { PasswordInput } from "../components/PasswordInput";
+import { HatchButton } from "../components/HatchButton";
+import { neoCardClass, neoInputClass } from "../lib/theme";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -27,68 +31,77 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 relative">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      <motion.form
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800"
-      >
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">Log in</h1>
+    <div className="min-h-screen flex bg-violet-50 dark:bg-slate-950">
+      <AuthIllustration
+        headline="Land more interviews,"
+        highlight="faster."
+        subtext="AI-powered resumes built to pass applicant tracking systems."
+      />
 
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="mb-4 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-md px-3 py-2"
-          >
-            {error}
-          </motion.p>
-        )}
+      <div className="relative flex-1 flex items-center justify-center px-6 py-12">
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
 
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Email
-        </label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
-        />
-
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Password
-        </label>
-        <input
-          type="password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
-        />
-
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          type="submit"
-          disabled={loading}
-          className="w-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 py-2 rounded-md font-medium hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50"
+        <motion.form
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          onSubmit={handleSubmit}
+          className={`w-full max-w-sm p-8 ${neoCardClass}`}
         >
-          {loading ? "Logging in..." : "Log in"}
-        </motion.button>
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 rounded-full bg-amber-400 dark:bg-amber-300 border-[3px] border-slate-900 dark:border-slate-900" />
+          </div>
 
-        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 text-center">
-          No account?{" "}
-          <Link to="/register" className="text-slate-900 dark:text-slate-100 font-medium underline">
-            Register
-          </Link>
-        </p>
-      </motion.form>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 text-center">
+            Log in
+          </h1>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="mb-4 text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={`mb-4 ${neoInputClass}`}
+          />
+
+          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            Password
+          </label>
+          <div className="mb-6">
+            <PasswordInput
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <HatchButton type="submit" disabled={loading} className="w-full">
+            {loading ? "Logging in..." : "Log in"}
+          </HatchButton>
+
+          <p className="mt-4 text-sm text-slate-700 dark:text-slate-300 text-center">
+            Need to create an account?{" "}
+            <Link to="/register" className="text-slate-900 dark:text-slate-100 font-bold underline">
+              Sign up
+            </Link>
+          </p>
+        </motion.form>
+      </div>
     </div>
   );
 }

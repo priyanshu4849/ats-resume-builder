@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
+import { HatchButton, hatchButtonClass } from "../components/HatchButton";
+import { NeoButton } from "../components/NeoButton";
+import { neoCardClass, neoInputClass, neoTextareaClass } from "../lib/theme";
 
 const emptyEducation = { school: "", degree: "", startDate: "", endDate: "", gpa: "" };
 const emptyExperience = { company: "", role: "", startDate: "", endDate: "", bulletsText: "" };
@@ -14,6 +17,9 @@ const TEMPLATES = [
   { value: "modern", label: "Modern", description: "Accent color, section bars, skill pills" },
   { value: "minimal", label: "Minimal", description: "Compact spacing, fits more on one page" },
 ];
+
+const entryCardClass =
+  "bg-white dark:bg-slate-800 border-[3px] border-slate-900 dark:border-slate-100 rounded-2xl p-4 mb-3 space-y-2";
 
 function toBulletsArray(text) {
   return text
@@ -152,7 +158,7 @@ export function ResumeEditorPage() {
   if (loading) {
     return (
       <Layout>
-        <p className="text-slate-500 dark:text-slate-400">Loading...</p>
+        <p className="text-slate-600 dark:text-slate-400">Loading...</p>
       </Layout>
     );
   }
@@ -162,33 +168,30 @@ export function ResumeEditorPage() {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate("/dashboard")}
-          className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+          className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
         >
           &larr; Back to dashboard
         </button>
         <div className="flex items-center gap-3">
           {savedMessage && (
-            <span className="text-sm text-green-600 dark:text-green-400">{savedMessage}</span>
+            <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              {savedMessage}
+            </span>
           )}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleExportPDF}
-            disabled={exporting}
-            className="text-sm font-medium border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-slate-900 dark:text-slate-100"
-          >
+          <NeoButton onClick={handleExportPDF} disabled={exporting} size="sm">
             {exporting ? "Generating..." : "Download PDF"}
-          </motion.button>
-          <Link
-            to={`/resumes/${id}/analyze`}
-            className="text-sm font-medium bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-3 py-1.5 rounded-md hover:bg-slate-800 dark:hover:bg-white"
-          >
+          </NeoButton>
+          <Link to={`/resumes/${id}/analyze`} className={hatchButtonClass("sm")}>
             Analyze against a job
           </Link>
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+      {error && (
+        <p className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4">
+          {error}
+        </p>
+      )}
 
       {/* Template */}
       <Section title="PDF Template">
@@ -200,14 +203,14 @@ export function ResumeEditorPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleSelectTemplate(t.value)}
-              className={`text-left rounded-lg border p-3 transition-colors ${
+              className={`text-left rounded-2xl border-[3px] p-3 transition-colors ${
                 template === t.value
-                  ? "border-slate-900 dark:border-slate-100 ring-2 ring-slate-900 dark:ring-slate-100 bg-slate-50 dark:bg-slate-800"
-                  : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  ? "border-slate-900 dark:border-slate-100 bg-white dark:bg-slate-800"
+                  : "border-slate-900/40 dark:border-slate-100/40 bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800"
               }`}
             >
-              <div className="font-medium text-slate-900 dark:text-slate-100">{t.label}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.description}</div>
+              <div className="font-bold text-slate-900 dark:text-slate-100">{t.label}</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t.description}</div>
             </motion.button>
           ))}
         </div>
@@ -219,7 +222,7 @@ export function ResumeEditorPage() {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+          className={neoInputClass}
         />
       </Section>
 
@@ -233,7 +236,7 @@ export function ResumeEditorPage() {
               placeholder={field}
               value={personalInfo[field] || ""}
               onChange={(e) => setPersonalInfo({ ...personalInfo, [field]: e.target.value })}
-              className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className={neoInputClass}
             />
           ))}
         </div>
@@ -246,95 +249,95 @@ export function ResumeEditorPage() {
           placeholder="Comma-separated, e.g. JavaScript, React, Node.js"
           value={skillsText}
           onChange={(e) => setSkillsText(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+          className={neoInputClass}
         />
       </Section>
 
       {/* Education */}
       <Section title="Education" onSave={saveEducation}>
         {education.map((entry, i) => (
-          <div
-            key={i}
-            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
-          >
+          <div key={i} className={entryCardClass}>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="School"
                 value={entry.school || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "school", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="Degree"
                 value={entry.degree || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "degree", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "startDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "endDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="GPA"
                 value={entry.gpa || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "gpa", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
             </div>
             <RemoveButton onClick={() => removeArrayItem(setEducation, i)} />
           </div>
         ))}
-        <AddButton onClick={() => setEducation([...education, { ...emptyEducation }])} label="Add education" />
+        <NeoButton
+          type="button"
+          size="sm"
+          onClick={() => setEducation([...education, { ...emptyEducation }])}
+        >
+          + Add education
+        </NeoButton>
       </Section>
 
       {/* Experience */}
       <Section title="Experience" onSave={saveExperience}>
         {experience.map((entry, i) => (
-          <div
-            key={i}
-            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
-          >
+          <div key={i} className={entryCardClass}>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="Company"
                 value={entry.company || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "company", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="Role"
                 value={entry.role || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "role", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "startDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "endDate", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
             </div>
             <textarea
@@ -342,38 +345,38 @@ export function ResumeEditorPage() {
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setExperience, i, "bulletsText", e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className={neoTextareaClass}
             />
             <RemoveButton onClick={() => removeArrayItem(setExperience, i)} />
           </div>
         ))}
-        <AddButton
+        <NeoButton
+          type="button"
+          size="sm"
           onClick={() => setExperience([...experience, { ...emptyExperience }])}
-          label="Add experience"
-        />
+        >
+          + Add experience
+        </NeoButton>
       </Section>
 
       {/* Projects */}
       <Section title="Projects" onSave={saveProjects}>
         {projects.map((entry, i) => (
-          <div
-            key={i}
-            className="border border-slate-200 dark:border-slate-700 rounded-md p-3 mb-3 space-y-2"
-          >
+          <div key={i} className={entryCardClass}>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 placeholder="Project name"
                 value={entry.name || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "name", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
               <input
                 type="text"
                 placeholder="Link"
                 value={entry.link || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "link", e.target.value)}
-                className="px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                className={neoInputClass}
               />
             </div>
             <input
@@ -381,19 +384,21 @@ export function ResumeEditorPage() {
               placeholder="Tech stack, comma-separated"
               value={entry.techStackText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "techStackText", e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className={neoInputClass}
             />
             <textarea
               placeholder="One bullet point per line"
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "bulletsText", e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className={neoTextareaClass}
             />
             <RemoveButton onClick={() => removeArrayItem(setProjects, i)} />
           </div>
         ))}
-        <AddButton onClick={() => setProjects([...projects, { ...emptyProject }])} label="Add project" />
+        <NeoButton type="button" size="sm" onClick={() => setProjects([...projects, { ...emptyProject }])}>
+          + Add project
+        </NeoButton>
       </Section>
     </Layout>
   );
@@ -413,17 +418,14 @@ function Section({ title, onSave, children }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 mb-6"
+      className={`p-5 mb-6 ${neoCardClass}`}
     >
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        <h2 className="font-bold text-slate-900 dark:text-slate-100">{title}</h2>
         {onSave && (
-          <button
-            onClick={onSave}
-            className="text-sm font-medium text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-1 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
+          <NeoButton onClick={onSave} size="sm">
             Save
-          </button>
+          </NeoButton>
         )}
       </div>
       {children}
@@ -431,22 +433,11 @@ function Section({ title, onSave, children }) {
   );
 }
 
-function AddButton({ onClick, label }) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-medium"
-    >
-      + {label}
-    </button>
-  );
-}
-
 function RemoveButton({ onClick }) {
   return (
     <button
       onClick={onClick}
-      className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+      className="text-xs font-bold text-red-700 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
     >
       Remove
     </button>

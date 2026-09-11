@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
+import { HatchButton } from "../components/HatchButton";
+import { NeoButton } from "../components/NeoButton";
+import { neoCardClass, neoTextareaClass } from "../lib/theme";
 
 export function AnalyzePage() {
   const { id } = useParams();
@@ -56,15 +59,15 @@ export function AnalyzePage() {
     <Layout>
       <button
         onClick={() => navigate(`/resumes/${id}`)}
-        className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-6 block"
+        className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 mb-6 block"
       >
         &larr; Back to resume
       </button>
 
-      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
         ATS Match Analysis
       </h1>
-      <p className="text-slate-600 dark:text-slate-400 mb-6">
+      <p className="text-slate-700 dark:text-slate-400 mb-6">
         Paste a job description to see how well this resume matches, and get suggestions for weak
         bullet points.
       </p>
@@ -75,20 +78,18 @@ export function AnalyzePage() {
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the job description here..."
           rows={6}
-          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md mb-3 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600"
+          className={`mb-3 ${neoTextareaClass}`}
         />
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          type="submit"
-          disabled={analyzing}
-          className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 rounded-md font-medium hover:bg-slate-800 dark:hover:bg-white disabled:opacity-50"
-        >
+        <HatchButton type="submit" disabled={analyzing}>
           {analyzing ? "Analyzing..." : "Analyze"}
-        </motion.button>
+        </HatchButton>
       </form>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+      {error && (
+        <p className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4">
+          {error}
+        </p>
+      )}
 
       <AnimatePresence>
         {analysis && (
@@ -98,27 +99,25 @@ export function AnalyzePage() {
             transition={{ duration: 0.3 }}
             className="space-y-6"
           >
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-              <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Match Score</h2>
+            <div className={`p-5 ${neoCardClass}`}>
+              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-2">Match Score</h2>
               <div className="flex items-center gap-3">
                 <motion.div
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="text-3xl font-bold text-slate-900 dark:text-slate-100"
+                  className="text-3xl font-extrabold text-slate-900 dark:text-slate-100"
                 >
                   {analysis.matchScore}
                 </motion.div>
-                <div className="text-slate-500 dark:text-slate-400">/ 100</div>
+                <div className="text-slate-700 dark:text-slate-400 font-medium">/ 100</div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-              <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                Missing Keywords
-              </h2>
+            <div className={`p-5 ${neoCardClass}`}>
+              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-3">Missing Keywords</h2>
               {analysis.missingKeywords.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">None &mdash; good coverage.</p>
+                <p className="text-sm text-slate-700 dark:text-slate-400">None &mdash; good coverage.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {analysis.missingKeywords.map((keyword, i) => (
@@ -127,7 +126,7 @@ export function AnalyzePage() {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.04 }}
-                      className="text-sm bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900 rounded-full px-3 py-1"
+                      className="text-sm font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-[3px] border-slate-900 dark:border-slate-100 rounded-full px-3 py-1"
                     >
                       {keyword}
                     </motion.span>
@@ -136,21 +135,21 @@ export function AnalyzePage() {
               )}
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-              <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                Weak Bullet Points
-              </h2>
+            <div className={`p-5 ${neoCardClass}`}>
+              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-3">Weak Bullet Points</h2>
               {analysis.weakBullets.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">No weak bullets flagged.</p>
+                <p className="text-sm text-slate-700 dark:text-slate-400">No weak bullets flagged.</p>
               ) : (
                 <div className="space-y-4">
                   {analysis.weakBullets.map((bullet, i) => (
                     <div
                       key={i}
-                      className="border border-slate-200 dark:border-slate-800 rounded-md p-3"
+                      className="bg-white dark:bg-slate-800 border-[3px] border-slate-900 dark:border-slate-100 rounded-2xl p-3"
                     >
-                      <p className="text-sm text-slate-900 dark:text-slate-100 mb-1">{bullet.text}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{bullet.reason}</p>
+                      <p className="text-sm text-slate-900 dark:text-slate-100 mb-1 font-medium">
+                        {bullet.text}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{bullet.reason}</p>
 
                       <AnimatePresence mode="wait">
                         {suggestions[i] ? (
@@ -159,50 +158,40 @@ export function AnalyzePage() {
                             initial={{ opacity: 0, scale: 0.97 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.2 }}
-                            className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-3 mt-2"
+                            className="bg-emerald-50 dark:bg-emerald-950/30 border-[3px] border-emerald-800 dark:border-emerald-600 rounded-2xl p-3 mt-2"
                           >
-                            <p className="text-sm text-green-900 dark:text-green-300 font-medium mb-1">
+                            <p className="text-sm text-emerald-900 dark:text-emerald-300 font-semibold mb-1">
                               {suggestions[i].improved}
                             </p>
-                            <p className="text-xs text-green-700 dark:text-green-500 mb-2">
+                            <p className="text-xs text-emerald-800 dark:text-emerald-500 mb-2">
                               {suggestions[i].reason}
                             </p>
-                            <button
-                              onClick={() => handleCopy(i, suggestions[i].improved)}
-                              className="text-xs font-medium text-green-800 dark:text-green-400 border border-green-300 dark:border-green-800 rounded-md px-2 py-1 hover:bg-green-100 dark:hover:bg-green-900/40"
-                            >
+                            <NeoButton size="sm" onClick={() => handleCopy(i, suggestions[i].improved)}>
                               {copiedIndex === i ? "Copied!" : "Copy"}
-                            </button>
+                            </NeoButton>
                           </motion.div>
                         ) : (
-                          <motion.button
+                          <NeoButton
                             key="button"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.97 }}
+                            size="sm"
                             onClick={() => handleGetSuggestion(i, bullet.text)}
                             disabled={rewritingIndex === i}
-                            className="text-sm font-medium text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-md px-3 py-1 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
                           >
                             {rewritingIndex === i ? "Rewriting..." : "Get rewrite suggestion"}
-                          </motion.button>
+                          </NeoButton>
                         )}
                       </AnimatePresence>
                     </div>
                   ))}
                 </div>
               )}
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">
+              <p className="text-xs text-slate-600 dark:text-slate-500 mt-4">
                 Like a suggestion? Copy it and paste it into the matching bullet on the resume
                 editor page &mdash; nothing here is saved automatically.
               </p>
             </div>
 
-            <button
-              onClick={() => navigate(`/resumes/${id}`)}
-              className="text-sm font-medium text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-md px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              &larr; Back to resume
-            </button>
+            <NeoButton onClick={() => navigate(`/resumes/${id}`)}>&larr; Back to resume</NeoButton>
           </motion.div>
         )}
       </AnimatePresence>

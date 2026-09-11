@@ -13,20 +13,21 @@ export function Layout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+    <div className="min-h-screen bg-violet-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b-[3px] border-slate-900 dark:border-slate-100">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link
             to="/dashboard"
-            className="font-semibold text-slate-900 dark:text-slate-100 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 hover:opacity-80 transition-opacity"
           >
+            <span className="w-6 h-6 rounded-full bg-amber-400 border-2 border-slate-900" />
             ATS Resume Builder
           </Link>
           <div className="flex items-center gap-4 text-sm">
-            {user && <span className="text-slate-600 dark:text-slate-400">{user.name}</span>}
+            {user && <span className="text-slate-700 dark:text-slate-300 font-medium">{user.name}</span>}
             <button
               onClick={handleLogout}
-              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 font-medium"
+              className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 font-semibold"
             >
               Log out
             </button>

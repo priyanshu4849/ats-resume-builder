@@ -9,7 +9,7 @@ export function ThemeToggle() {
     <button
       onClick={toggleTheme}
       aria-label="Toggle dark mode"
-      className="relative w-9 h-9 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden hover:bg-slate-100 dark:hover:bg-slate-800"
+      className="relative w-10 h-10 rounded-full border-[3px] border-slate-900 dark:border-slate-100 bg-white dark:bg-slate-800 flex items-center justify-center overflow-hidden hover:bg-slate-100 dark:hover:bg-slate-700"
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span
