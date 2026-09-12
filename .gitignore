@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Puppeteer's downloaded Chrome binary (re-downloaded on every install)
+.cache/
+
 # Environment variables (secrets: Mongo URI, JWT secret, LLM API key)
 .env
 .env.local
