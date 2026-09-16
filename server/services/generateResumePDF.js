@@ -13,7 +13,10 @@ async function generateResumePDF(resume, templateName) {
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    // domcontentloaded, not networkidle0: our HTML has zero external resources,
+    // and networkidle0 can hang waiting on Chrome's implicit favicon request in
+    // sandboxed containers with no real network route for it.
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
