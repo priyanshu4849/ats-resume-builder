@@ -168,7 +168,7 @@ router.patch("/:id", requireAuth, async (req, res) => {
     const resume = await Resume.findOneAndUpdate(
       { _id: req.params.id, userId: req.userId },
       updates,
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
 
     if (!resume) {

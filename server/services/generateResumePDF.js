@@ -1,7 +1,10 @@
-const puppeteer = require("puppeteer");
 const { renderResumeHTML } = require("./templates");
 
 async function generateResumePDF(resume, templateName) {
+  // Lazy-required: puppeteer's package is ESM-only, and loading it at module
+  // scope would break any CommonJS consumer (like Jest) that imports this
+  // file's module tree without ever calling this function.
+  const puppeteer = require("puppeteer");
   const html = renderResumeHTML(resume, templateName);
 
   // --no-sandbox is needed on most container hosts (Render/Railway run as root,
