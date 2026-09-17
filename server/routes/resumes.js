@@ -8,6 +8,7 @@ const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const rewriteBullet = require("../services/rewriteBullet");
 const generateResumePDF = require("../services/generateResumePDF");
 const { TEMPLATE_NAMES } = require("../services/templates");
+const { heavyLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
@@ -36,7 +37,7 @@ router.post("/", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/upload", requireAuth, upload.single("resumeFile"), async (req, res) => {
+router.post("/upload", requireAuth, heavyLimiter, upload.single("resumeFile"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "resumeFile is required" });
@@ -63,7 +64,7 @@ router.post("/upload", requireAuth, upload.single("resumeFile"), async (req, res
   }
 });
 
-router.post("/:id/analyze", requireAuth, async (req, res) => {
+router.post("/:id/analyze", requireAuth, heavyLimiter, async (req, res) => {
   try {
     const { jobDescription } = req.body;
 
@@ -93,7 +94,7 @@ router.post("/:id/analyze", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/:id/rewrite-bullet", requireAuth, async (req, res) => {
+router.post("/:id/rewrite-bullet", requireAuth, heavyLimiter, async (req, res) => {
   try {
     const { bulletText, jobDescription } = req.body;
 
@@ -134,7 +135,7 @@ router.get("/:id", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/:id/export-pdf", requireAuth, async (req, res) => {
+router.get("/:id/export-pdf", requireAuth, heavyLimiter, async (req, res) => {
   try {
     const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
     if (!resume) {
