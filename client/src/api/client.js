@@ -70,6 +70,9 @@ export const api = {
   register: (body) => request("/auth/register", { method: "POST", body }),
   login: (body) => request("/auth/login", { method: "POST", body }),
   getMe: (token) => request("/users/me", { token }),
+  forgotPassword: (email) => request("/auth/forgot-password", { method: "POST", body: { email } }),
+  resetPassword: (token, password) =>
+    request("/auth/reset-password", { method: "POST", body: { token, password } }),
 
   listResumes: (token) => request("/resumes", { token }),
   createResume: (body, token) => request("/resumes", { method: "POST", body, token }),

@@ -84,12 +84,20 @@ export function LoginPage() {
             className={`mb-4 ${neoInputClass}`}
           />
 
-          <label
-            htmlFor="login-password"
-            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
-          >
-            Password
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label
+              htmlFor="login-password"
+              className="text-sm font-semibold text-slate-900 dark:text-slate-100"
+            >
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              className="text-xs font-bold text-slate-700 dark:text-slate-300 underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="mb-6">
             <PasswordInput
               id="login-password"
