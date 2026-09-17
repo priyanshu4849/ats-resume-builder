@@ -98,6 +98,11 @@ describe("POST /api/auth/forgot-password", () => {
     const user = await User.findById(register.body.user.id).select("+resetPasswordToken");
     expect(user.resetPasswordToken).toBeTruthy();
   });
+
+  it("rejects a missing email", async () => {
+    const res = await request(app).post("/api/auth/forgot-password").send({});
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("POST /api/auth/reset-password", () => {
@@ -139,5 +144,32 @@ describe("POST /api/auth/reset-password", () => {
       .post("/api/auth/reset-password")
       .send({ token: "made-up-token", password: "newpassword123" });
     expect(res.status).toBe(400);
+  });
+
+  it("rejects a missing token or password", async () => {
+    const noToken = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ password: "newpassword123" });
+    expect(noToken.status).toBe(400);
+
+    const noPassword = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "some-token" });
+    expect(noPassword.status).toBe(400);
+  });
+
+  it("cannot be reused after a successful reset (single-use token)", async () => {
+    const register = await request(app).post("/api/auth/register").send(validUser);
+    await setResetToken(register.body.user.id, "single-use-token");
+
+    const first = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "single-use-token", password: "newpassword123" });
+    expect(first.status).toBe(200);
+
+    const second = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ token: "single-use-token", password: "anotherpassword" });
+    expect(second.status).toBe(400);
   });
 });
