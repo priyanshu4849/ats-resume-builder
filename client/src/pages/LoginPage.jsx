@@ -60,6 +60,7 @@ export function LoginPage() {
 
           {error && (
             <motion.p
+              role="alert"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               className="mb-4 text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2"
@@ -68,10 +69,14 @@ export function LoginPage() {
             </motion.p>
           )}
 
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label
+            htmlFor="login-email"
+            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
+          >
             Email
           </label>
           <input
+            id="login-email"
             type="email"
             required
             value={email}
@@ -79,11 +84,15 @@ export function LoginPage() {
             className={`mb-4 ${neoInputClass}`}
           />
 
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label
+            htmlFor="login-password"
+            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
+          >
             Password
           </label>
           <div className="mb-6">
             <PasswordInput
+              id="login-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

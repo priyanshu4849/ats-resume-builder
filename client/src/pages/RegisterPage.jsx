@@ -61,6 +61,7 @@ export function RegisterPage() {
 
           {error && (
             <motion.p
+              role="alert"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               className="mb-4 text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2"
@@ -69,10 +70,14 @@ export function RegisterPage() {
             </motion.p>
           )}
 
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label
+            htmlFor="register-name"
+            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
+          >
             Name
           </label>
           <input
+            id="register-name"
             type="text"
             required
             value={name}
@@ -80,10 +85,14 @@ export function RegisterPage() {
             className={`mb-4 ${neoInputClass}`}
           />
 
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label
+            htmlFor="register-email"
+            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
+          >
             Email
           </label>
           <input
+            id="register-email"
             type="email"
             required
             value={email}
@@ -91,11 +100,15 @@ export function RegisterPage() {
             className={`mb-4 ${neoInputClass}`}
           />
 
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+          <label
+            htmlFor="register-password"
+            className="block text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1"
+          >
             Password
           </label>
           <div className="mb-6">
             <PasswordInput
+              id="register-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

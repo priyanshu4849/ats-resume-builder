@@ -47,7 +47,10 @@ export function UploadPage() {
         className={`p-6 max-w-md ${neoCardClass}`}
       >
         {error && (
-          <p className="mb-4 text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2">
+          <p
+            role="alert"
+            className="mb-4 text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2"
+          >
             {error}
           </p>
         )}
@@ -64,7 +67,10 @@ export function UploadPage() {
           <NeoButton type="button" size="sm" onClick={() => fileInputRef.current.click()}>
             Choose file
           </NeoButton>
-          <span className="text-sm text-slate-800 dark:text-slate-200 font-medium truncate">
+          <span
+            aria-live="polite"
+            className="text-sm text-slate-800 dark:text-slate-200 font-medium truncate"
+          >
             {file ? file.name : "No file chosen"}
           </span>
         </div>

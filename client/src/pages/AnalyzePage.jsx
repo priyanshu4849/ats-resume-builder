@@ -77,6 +77,7 @@ export function AnalyzePage() {
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the job description here..."
+          aria-label="Job description"
           rows={6}
           className={`mb-3 ${neoTextareaClass}`}
         />
@@ -86,7 +87,10 @@ export function AnalyzePage() {
       </form>
 
       {error && (
-        <p className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4">
+        <p
+          role="alert"
+          className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4"
+        >
           {error}
         </p>
       )}

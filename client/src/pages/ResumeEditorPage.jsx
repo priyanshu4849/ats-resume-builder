@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
-import { HatchButton, hatchButtonClass } from "../components/HatchButton";
+import { hatchButtonClass } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
 import { neoCardClass, neoInputClass, neoTextareaClass } from "../lib/theme";
 
@@ -188,7 +188,10 @@ export function ResumeEditorPage() {
       </div>
 
       {error && (
-        <p className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4">
+        <p
+          role="alert"
+          className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4"
+        >
           {error}
         </p>
       )}
@@ -220,6 +223,7 @@ export function ResumeEditorPage() {
       <Section title="Resume Title" onSave={saveTitle}>
         <input
           type="text"
+          aria-label="Resume title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className={neoInputClass}
@@ -229,11 +233,18 @@ export function ResumeEditorPage() {
       {/* Personal Info */}
       <Section title="Personal Info" onSave={savePersonalInfo}>
         <div className="grid grid-cols-2 gap-3">
-          {["name", "email", "phone", "linkedin", "github"].map((field) => (
+          {[
+            { field: "name", label: "Full name" },
+            { field: "email", label: "Email" },
+            { field: "phone", label: "Phone" },
+            { field: "linkedin", label: "LinkedIn URL" },
+            { field: "github", label: "GitHub URL" },
+          ].map(({ field, label }) => (
             <input
               key={field}
               type="text"
               placeholder={field}
+              aria-label={label}
               value={personalInfo[field] || ""}
               onChange={(e) => setPersonalInfo({ ...personalInfo, [field]: e.target.value })}
               className={neoInputClass}
@@ -247,6 +258,7 @@ export function ResumeEditorPage() {
         <input
           type="text"
           placeholder="Comma-separated, e.g. JavaScript, React, Node.js"
+          aria-label="Skills, comma-separated"
           value={skillsText}
           onChange={(e) => setSkillsText(e.target.value)}
           className={neoInputClass}
@@ -261,6 +273,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="School"
+                aria-label="School"
                 value={entry.school || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "school", e.target.value)}
                 className={neoInputClass}
@@ -268,6 +281,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Degree"
+                aria-label="Degree"
                 value={entry.degree || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "degree", e.target.value)}
                 className={neoInputClass}
@@ -275,6 +289,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Start date"
+                aria-label="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "startDate", e.target.value)}
                 className={neoInputClass}
@@ -282,6 +297,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="End date"
+                aria-label="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "endDate", e.target.value)}
                 className={neoInputClass}
@@ -289,6 +305,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="GPA"
+                aria-label="GPA"
                 value={entry.gpa || ""}
                 onChange={(e) => updateArrayItem(setEducation, i, "gpa", e.target.value)}
                 className={neoInputClass}
@@ -314,6 +331,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Company"
+                aria-label="Company"
                 value={entry.company || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "company", e.target.value)}
                 className={neoInputClass}
@@ -321,6 +339,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Role"
+                aria-label="Role"
                 value={entry.role || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "role", e.target.value)}
                 className={neoInputClass}
@@ -328,6 +347,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Start date"
+                aria-label="Start date"
                 value={entry.startDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "startDate", e.target.value)}
                 className={neoInputClass}
@@ -335,6 +355,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="End date"
+                aria-label="End date"
                 value={entry.endDate || ""}
                 onChange={(e) => updateArrayItem(setExperience, i, "endDate", e.target.value)}
                 className={neoInputClass}
@@ -342,6 +363,7 @@ export function ResumeEditorPage() {
             </div>
             <textarea
               placeholder="One bullet point per line"
+              aria-label="Experience bullet points, one per line"
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setExperience, i, "bulletsText", e.target.value)}
               rows={3}
@@ -367,6 +389,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Project name"
+                aria-label="Project name"
                 value={entry.name || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "name", e.target.value)}
                 className={neoInputClass}
@@ -374,6 +397,7 @@ export function ResumeEditorPage() {
               <input
                 type="text"
                 placeholder="Link"
+                aria-label="Project link"
                 value={entry.link || ""}
                 onChange={(e) => updateArrayItem(setProjects, i, "link", e.target.value)}
                 className={neoInputClass}
@@ -382,12 +406,14 @@ export function ResumeEditorPage() {
             <input
               type="text"
               placeholder="Tech stack, comma-separated"
+              aria-label="Tech stack, comma-separated"
               value={entry.techStackText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "techStackText", e.target.value)}
               className={neoInputClass}
             />
             <textarea
               placeholder="One bullet point per line"
+              aria-label="Project bullet points, one per line"
               value={entry.bulletsText || ""}
               onChange={(e) => updateArrayItem(setProjects, i, "bulletsText", e.target.value)}
               rows={3}

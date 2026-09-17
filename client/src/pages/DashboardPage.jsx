@@ -65,6 +65,7 @@ export function DashboardPage() {
         <input
           type="text"
           placeholder="New resume title (e.g. Frontend Developer Resume)"
+          aria-label="New resume title"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           className={`flex-1 ${neoInputClass}`}
@@ -75,7 +76,10 @@ export function DashboardPage() {
       </form>
 
       {error && (
-        <p className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4">
+        <p
+          role="alert"
+          className="text-sm font-medium text-red-700 bg-red-100 border-[3px] border-red-900 rounded-2xl px-3 py-2 mb-4"
+        >
           {error}
         </p>
       )}
