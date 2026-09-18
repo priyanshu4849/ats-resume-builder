@@ -6,6 +6,7 @@ const parseResumeFile = require("../services/parseResumeFile");
 const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const rewriteBullet = require("../services/rewriteBullet");
+const rewriteResumeForJD = require("../services/rewriteResumeForJD");
 const generateResumePDF = require("../services/generateResumePDF");
 const { TEMPLATE_NAMES } = require("../services/templates");
 const { heavyLimiter } = require("../middleware/rateLimit");
@@ -111,6 +112,26 @@ router.post("/:id/rewrite-bullet", requireAuth, heavyLimiter, async (req, res) =
     res.json({ suggestion });
   } catch (err) {
     res.status(500).json({ error: err.message || "Something went wrong rewriting the bullet" });
+  }
+});
+
+router.post("/:id/rewrite-resume", requireAuth, heavyLimiter, async (req, res) => {
+  try {
+    const { jobDescription, weakBullets, missingKeywords } = req.body;
+
+    if (!jobDescription || !Array.isArray(weakBullets)) {
+      return res.status(400).json({ error: "jobDescription and weakBullets are required" });
+    }
+
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const result = await rewriteResumeForJD(resume, jobDescription, weakBullets, missingKeywords || []);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong rewriting the resume" });
   }
 });
 

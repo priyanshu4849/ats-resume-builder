@@ -89,5 +89,11 @@ export const api = {
       body: { bulletText, jobDescription },
       token,
     }),
+  rewriteResumeForJD: (id, jobDescription, weakBullets, missingKeywords, token) =>
+    request(`/resumes/${id}/rewrite-resume`, {
+      method: "POST",
+      body: { jobDescription, weakBullets, missingKeywords },
+      token,
+    }),
   exportResumePDF,
 };

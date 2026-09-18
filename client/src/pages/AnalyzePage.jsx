@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Layout } from "../components/Layout";
@@ -13,6 +13,7 @@ export function AnalyzePage() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
+  const [resume, setResume] = useState(null);
   const [jobDescription, setJobDescription] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState("");
@@ -21,12 +22,25 @@ export function AnalyzePage() {
   const [rewritingIndex, setRewritingIndex] = useState(null);
   const [copiedIndex, setCopiedIndex] = useState(null);
 
+  const [rewritingResume, setRewritingResume] = useState(false);
+  const [rewriteResult, setRewriteResult] = useState(null);
+  const [selectedBullets, setSelectedBullets] = useState(new Set());
+  const [selectedSkills, setSelectedSkills] = useState(new Set());
+  const [applying, setApplying] = useState(false);
+  const [applySuccess, setApplySuccess] = useState("");
+
+  useEffect(() => {
+    api.getResume(id, token).then((data) => setResume(data.resume)).catch((err) => setError(err.message));
+  }, [id]);
+
   async function handleAnalyze(e) {
     e.preventDefault();
     if (!jobDescription.trim()) return;
     setError("");
     setAnalyzing(true);
     setSuggestions({});
+    setRewriteResult(null);
+    setApplySuccess("");
     try {
       const data = await api.analyzeResume(id, jobDescription, token);
       setAnalysis(data.analysis);
@@ -34,6 +48,72 @@ export function AnalyzePage() {
       setError(err.message);
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+  async function handleRewriteResume() {
+    setError("");
+    setApplySuccess("");
+    setRewritingResume(true);
+    try {
+      const data = await api.rewriteResumeForJD(
+        id,
+        jobDescription,
+        analysis.weakBullets,
+        analysis.missingKeywords,
+        token
+      );
+      setRewriteResult(data);
+      setSelectedBullets(
+        new Set(data.bulletRewrites.map((_, i) => i).filter((i) => data.bulletRewrites[i].location))
+      );
+      setSelectedSkills(new Set(data.suggestedSkillsToAdd.map((_, i) => i)));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRewritingResume(false);
+    }
+  }
+
+  function toggleSelected(set, setSet, index) {
+    const next = new Set(set);
+    if (next.has(index)) {
+      next.delete(index);
+    } else {
+      next.add(index);
+    }
+    setSet(next);
+  }
+
+  async function handleApplyRewrite() {
+    setError("");
+    setApplying(true);
+    try {
+      const updatedExperience = resume.experience.map((exp) => ({ ...exp, bullets: [...exp.bullets] }));
+      const updatedProjects = resume.projects.map((proj) => ({ ...proj, bullets: [...proj.bullets] }));
+
+      rewriteResult.bulletRewrites.forEach((rewrite, i) => {
+        if (!selectedBullets.has(i) || !rewrite.location) return;
+        const { section, entryIndex, bulletIndex } = rewrite.location;
+        const target = section === "experience" ? updatedExperience : updatedProjects;
+        target[entryIndex].bullets[bulletIndex] = rewrite.improved;
+      });
+
+      const skillsToAdd = rewriteResult.suggestedSkillsToAdd.filter((_, i) => selectedSkills.has(i));
+      const updatedSkills = [...resume.skills, ...skillsToAdd];
+
+      const data = await api.updateResume(
+        id,
+        { experience: updatedExperience, projects: updatedProjects, skills: updatedSkills },
+        token
+      );
+      setResume(data.resume);
+      setRewriteResult(null);
+      setApplySuccess("Applied — your resume has been updated.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setApplying(false);
     }
   }
 
@@ -194,6 +274,128 @@ export function AnalyzePage() {
                 editor page &mdash; nothing here is saved automatically.
               </p>
             </div>
+
+            {(analysis.weakBullets.length > 0 || analysis.missingKeywords.length > 0) && (
+              <div className={`p-5 ${neoCardClass}`}>
+                <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  Rewrite My Resume For This Job
+                </h2>
+                <p className="text-sm text-slate-700 dark:text-slate-400 mb-3">
+                  Rewrites the weak bullets above and proposes adding the missing keywords to your
+                  skills. Nothing is saved until you review it and click Apply.
+                </p>
+
+                {!rewriteResult && (
+                  <NeoButton onClick={handleRewriteResume} disabled={rewritingResume || !resume}>
+                    {rewritingResume ? "Rewriting..." : "Rewrite my resume for this job"}
+                  </NeoButton>
+                )}
+
+                {applySuccess && (
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
+                    {applySuccess}
+                  </p>
+                )}
+
+                <AnimatePresence>
+                  {rewriteResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4 mt-2"
+                    >
+                      {rewriteResult.bulletRewrites.map((rewrite, i) => (
+                        <div
+                          key={i}
+                          className="bg-white dark:bg-slate-800 border-[3px] border-slate-900 dark:border-slate-100 rounded-2xl p-3"
+                        >
+                          <p className="text-xs text-slate-500 dark:text-slate-500 line-through mb-1">
+                            {rewrite.original}
+                          </p>
+
+                          {rewrite.location ? (
+                            <label className="flex items-start gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedBullets.has(i)}
+                                onChange={() => toggleSelected(selectedBullets, setSelectedBullets, i)}
+                                className="mt-1"
+                              />
+                              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {rewrite.improved}
+                              </span>
+                            </label>
+                          ) : (
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {rewrite.improved}
+                              </p>
+                              <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">
+                                Couldn&apos;t find this exact bullet in your resume anymore (it may
+                                have changed since you analyzed) &mdash; copy it in manually instead.
+                              </p>
+                              <NeoButton
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => handleCopy(`bulk-${i}`, rewrite.improved)}
+                              >
+                                {copiedIndex === `bulk-${i}` ? "Copied!" : "Copy"}
+                              </NeoButton>
+                            </div>
+                          )}
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                            {rewrite.reason}
+                          </p>
+                        </div>
+                      ))}
+
+                      {rewriteResult.suggestedSkillsToAdd.length > 0 && (
+                        <div className="bg-white dark:bg-slate-800 border-[3px] border-slate-900 dark:border-slate-100 rounded-2xl p-3">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                            Add to Skills
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {rewriteResult.suggestedSkillsToAdd.map((skill, i) => (
+                              <label
+                                key={i}
+                                className="flex items-center gap-1.5 text-sm font-semibold bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-[3px] border-slate-900 dark:border-slate-100 rounded-full px-3 py-1 cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSkills.has(i)}
+                                  onChange={() => toggleSelected(selectedSkills, setSelectedSkills, i)}
+                                />
+                                {skill}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-3">
+                        <NeoButton
+                          onClick={handleApplyRewrite}
+                          disabled={applying || (selectedBullets.size === 0 && selectedSkills.size === 0)}
+                        >
+                          {applying
+                            ? "Applying..."
+                            : `Apply ${selectedBullets.size + selectedSkills.size} change${
+                                selectedBullets.size + selectedSkills.size === 1 ? "" : "s"
+                              } to my resume`}
+                        </NeoButton>
+                        <button
+                          type="button"
+                          onClick={() => setRewriteResult(null)}
+                          className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
+                        >
+                          Discard
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             <NeoButton onClick={() => navigate(`/resumes/${id}`)}>&larr; Back to resume</NeoButton>
           </motion.div>
