@@ -28,6 +28,7 @@ export function AnalyzePage() {
   const [selectedSkills, setSelectedSkills] = useState(new Set());
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.getResume(id, token).then((data) => setResume(data.resume)).catch((err) => setError(err.message));
@@ -114,6 +115,18 @@ export function AnalyzePage() {
       setError(err.message);
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleDownloadPDF() {
+    setError("");
+    setDownloading(true);
+    try {
+      await api.exportResumePDF(id, token, resume?.template);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -285,11 +298,25 @@ export function AnalyzePage() {
                   skills. Nothing is saved until you review it and click Apply.
                 </p>
 
-                {!rewriteResult && (
-                  <NeoButton onClick={handleRewriteResume} disabled={rewritingResume || !resume}>
-                    {rewritingResume ? "Rewriting..." : "Rewrite my resume for this job"}
+                <div className="flex flex-wrap items-center gap-3">
+                  {!rewriteResult && (
+                    <NeoButton onClick={handleRewriteResume} disabled={rewritingResume || !resume}>
+                      {rewritingResume ? "Rewriting..." : "Rewrite my resume for this job"}
+                    </NeoButton>
+                  )}
+
+                  <NeoButton
+                    onClick={handleDownloadPDF}
+                    disabled={!applySuccess || downloading}
+                    title={
+                      applySuccess
+                        ? "Download the updated resume as a PDF"
+                        : "Apply a rewrite first to enable download"
+                    }
+                  >
+                    {downloading ? "Generating..." : "Download rewritten resume"}
                   </NeoButton>
-                )}
+                </div>
 
                 {applySuccess && (
                   <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mt-2">
