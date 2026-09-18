@@ -55,7 +55,15 @@ ATS-resume/
     ├── middleware/               # JWT auth guard, multer upload config
     ├── services/                 # parsing, Claude calls, PDF generation
     │   └── templates/           # classic / modern / minimal PDF templates
+    ├── scripts/
+    │   └── generateTemplatePreviews.js  # renders each template with sample data → PNG thumbnails
     └── .puppeteerrc.cjs         # Puppeteer cache path (see Deployment notes)
+```
+
+The template picker in the resume editor shows a screenshot of each template (`client/public/template-previews/*.png`) rather than plain text. These are generated once, not at runtime — if you change a template's HTML/CSS in `server/services/templates/`, regenerate them:
+
+```bash
+cd server && npm run generate:previews
 ```
 
 ---

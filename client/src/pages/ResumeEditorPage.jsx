@@ -13,9 +13,24 @@ const emptyExperience = { company: "", role: "", startDate: "", endDate: "", bul
 const emptyProject = { name: "", techStackText: "", bulletsText: "", link: "" };
 
 const TEMPLATES = [
-  { value: "classic", label: "Classic", description: "Plain black & white, timeless ATS format" },
-  { value: "modern", label: "Modern", description: "Accent color, section bars, skill pills" },
-  { value: "minimal", label: "Minimal", description: "Compact spacing, fits more on one page" },
+  {
+    value: "classic",
+    label: "Classic",
+    description: "Plain black & white, timeless ATS format",
+    preview: "/template-previews/classic.png",
+  },
+  {
+    value: "modern",
+    label: "Modern",
+    description: "Accent color, section bars, skill pills",
+    preview: "/template-previews/modern.png",
+  },
+  {
+    value: "minimal",
+    label: "Minimal",
+    description: "Compact spacing, fits more on one page",
+    preview: "/template-previews/minimal.png",
+  },
 ];
 
 const entryCardClass =
@@ -212,6 +227,13 @@ export function ResumeEditorPage() {
                   : "border-slate-900/40 dark:border-slate-100/40 bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800"
               }`}
             >
+              <div className="w-full h-36 overflow-hidden rounded-lg border-2 border-slate-900/20 dark:border-slate-100/20 bg-white mb-2">
+                <img
+                  src={t.preview}
+                  alt={`${t.label} template preview`}
+                  className="w-full h-auto object-cover object-top"
+                />
+              </div>
               <div className="font-bold text-slate-900 dark:text-slate-100">{t.label}</div>
               <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t.description}</div>
             </motion.button>
