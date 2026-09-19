@@ -35,8 +35,18 @@ export function AnalyzePage() {
   const [keywordSuggestions, setKeywordSuggestions] = useState({});
   const [loadingKeyword, setLoadingKeyword] = useState(null);
 
+  const [bulletQuality, setBulletQuality] = useState([]);
+  const [openFixBullet, setOpenFixBullet] = useState(null);
+  const [bulletFixes, setBulletFixes] = useState({});
+  const [fixingBullet, setFixingBullet] = useState(null);
+
+  function loadBulletQuality() {
+    api.getBulletQuality(id, token).then((data) => setBulletQuality(data.bullets)).catch(() => {});
+  }
+
   useEffect(() => {
     api.getResume(id, token).then((data) => setResume(data.resume)).catch((err) => setError(err.message));
+    loadBulletQuality();
   }, [id]);
 
   async function handleAnalyze(e) {
@@ -94,6 +104,80 @@ export function AnalyzePage() {
     }
   }
 
+  async function handleToggleFix(bulletText) {
+    if (openFixBullet === bulletText) {
+      setOpenFixBullet(null);
+      return;
+    }
+    setOpenFixBullet(bulletText);
+    if (bulletFixes[bulletText] || !jobDescription.trim()) return;
+
+    setFixingBullet(bulletText);
+    try {
+      const data = await api.rewriteBullet(id, bulletText, jobDescription, token);
+      setBulletFixes((prev) => ({ ...prev, [bulletText]: data.suggestion }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFixingBullet(null);
+    }
+  }
+
+  function renderBulletLine(bulletText, key) {
+    const quality = bulletQuality.find((b) => b.text === bulletText);
+    const hasIssues = Boolean(quality && quality.issues.length > 0);
+    const isOpen = openFixBullet === bulletText;
+    const fix = bulletFixes[bulletText];
+
+    return (
+      <li key={key} className="text-sm">
+        <button
+          type="button"
+          onClick={() => hasIssues && handleToggleFix(bulletText)}
+          title={hasIssues ? quality.issues.join(" · ") : undefined}
+          className={`text-left text-slate-900 dark:text-slate-100 ${
+            hasIssues
+              ? "underline decoration-wavy decoration-red-500 decoration-2 underline-offset-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 rounded"
+              : "cursor-default"
+          }`}
+        >
+          {bulletText}
+        </button>
+        <AnimatePresence>
+          {isOpen && hasIssues && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-1 ml-2 pl-3 border-l-[3px] border-red-400 dark:border-red-600 overflow-hidden"
+            >
+              <p className="text-xs text-red-700 dark:text-red-400 mb-1 py-1">
+                {quality.issues.join(" · ")}
+              </p>
+              {!jobDescription.trim() ? (
+                <p className="text-xs text-slate-500 dark:text-slate-500 pb-1">
+                  Paste a job description above and analyze to get a tailored fix.
+                </p>
+              ) : fixingBullet === bulletText ? (
+                <p className="text-xs text-slate-600 dark:text-slate-400 pb-1">Thinking...</p>
+              ) : fix ? (
+                <div className="bg-emerald-50 dark:bg-emerald-950/30 border-[3px] border-emerald-800 dark:border-emerald-600 rounded-xl p-2 mb-1">
+                  <p className="text-sm text-emerald-900 dark:text-emerald-300 font-semibold mb-1">
+                    {fix.improved}
+                  </p>
+                  <p className="text-xs text-emerald-800 dark:text-emerald-500 mb-2">{fix.reason}</p>
+                  <NeoButton size="sm" onClick={() => handleCopy(`inline-${bulletText}`, fix.improved)}>
+                    {copiedIndex === `inline-${bulletText}` ? "Copied!" : "Copy"}
+                  </NeoButton>
+                </div>
+              ) : null}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </li>
+    );
+  }
+
   function toggleSelected(set, setSet, index) {
     const next = new Set(set);
     if (next.has(index)) {
@@ -129,6 +213,9 @@ export function AnalyzePage() {
       setResume(data.resume);
       setRewriteResult(null);
       setApplySuccess("Applied — your resume has been updated.");
+      setBulletFixes({});
+      setOpenFixBullet(null);
+      loadBulletQuality();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -380,6 +467,36 @@ export function AnalyzePage() {
                 editor page &mdash; nothing here is saved automatically.
               </p>
             </div>
+
+            {resume && (resume.experience.length > 0 || resume.projects.length > 0) && (
+              <div className={`p-5 ${neoCardClass}`}>
+                <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-1">Your Resume</h2>
+                <p className="text-sm text-slate-700 dark:text-slate-400 mb-3">
+                  Weak bullets are underlined &mdash; hover to see why, click for a tailored fix.
+                </p>
+                <div className="space-y-4">
+                  {resume.experience.map((exp, i) => (
+                    <div key={`exp-${i}`}>
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {exp.role}
+                        {exp.company ? ` @ ${exp.company}` : ""}
+                      </p>
+                      <ul className="mt-1 space-y-1.5 list-disc list-inside">
+                        {exp.bullets.map((bulletText, j) => renderBulletLine(bulletText, `exp-${i}-${j}`))}
+                      </ul>
+                    </div>
+                  ))}
+                  {resume.projects.map((proj, i) => (
+                    <div key={`proj-${i}`}>
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{proj.name}</p>
+                      <ul className="mt-1 space-y-1.5 list-disc list-inside">
+                        {proj.bullets.map((bulletText, j) => renderBulletLine(bulletText, `proj-${i}-${j}`))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {(analysis.weakBullets.length > 0 || analysis.missingKeywords.length > 0) && (
               <div className={`p-5 ${neoCardClass}`}>

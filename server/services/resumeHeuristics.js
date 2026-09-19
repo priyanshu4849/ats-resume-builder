@@ -40,9 +40,13 @@ function firstWord(text) {
   return match ? match[0].toLowerCase() : "";
 }
 
-function hasWeakOpener(bulletText) {
+function matchedWeakOpener(bulletText) {
   const lower = bulletText.trim().toLowerCase();
-  return WEAK_OPENERS.some((phrase) => lower.startsWith(phrase));
+  return WEAK_OPENERS.find((phrase) => lower.startsWith(phrase)) || null;
+}
+
+function hasWeakOpener(bulletText) {
+  return matchedWeakOpener(bulletText) !== null;
 }
 
 function hasStrongActionVerbStart(bulletText) {
@@ -60,13 +64,14 @@ function isPassiveVoice(bulletText) {
 // Returns the flags plus human-readable issue strings, reused for both the
 // resume-wide category scores and (later) per-bullet inline highlighting.
 function analyzeBullet(bulletText) {
-  const weakOpener = hasWeakOpener(bulletText);
+  const matchedOpener = matchedWeakOpener(bulletText);
+  const weakOpener = matchedOpener !== null;
   const strongVerb = hasStrongActionVerbStart(bulletText);
   const quantified = hasQuantifiedImpact(bulletText);
   const passive = isPassiveVoice(bulletText);
 
   const issues = [];
-  if (weakOpener) issues.push('Starts with a filler phrase like "responsible for"');
+  if (weakOpener) issues.push(`Starts with a filler phrase ("${matchedOpener}")`);
   if (!strongVerb && !weakOpener) issues.push("Doesn't open with a strong action verb");
   if (passive) issues.push("Written in passive voice");
   if (!quantified) issues.push("No quantified impact (a number, %, or metric)");

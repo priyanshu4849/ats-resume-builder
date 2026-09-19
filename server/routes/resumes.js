@@ -9,6 +9,7 @@ const scoreResumeCategories = require("../services/scoreResumeCategories");
 const rewriteBullet = require("../services/rewriteBullet");
 const rewriteResumeForJD = require("../services/rewriteResumeForJD");
 const suggestKeywordPlacement = require("../services/suggestKeywordPlacement");
+const { analyzeBullet } = require("../services/resumeHeuristics");
 const generateResumePDF = require("../services/generateResumePDF");
 const { TEMPLATE_NAMES } = require("../services/templates");
 const { heavyLimiter } = require("../middleware/rateLimit");
@@ -181,6 +182,31 @@ router.get("/:id", requireAuth, async (req, res) => {
     res.json({ resume });
   } catch (err) {
     res.status(500).json({ error: "Something went wrong fetching the resume" });
+  }
+});
+
+router.get("/:id/bullet-quality", requireAuth, async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const bullets = [];
+    resume.experience.forEach((exp, entryIndex) => {
+      exp.bullets.forEach((text, bulletIndex) => {
+        bullets.push({ section: "experience", entryIndex, bulletIndex, text, ...analyzeBullet(text) });
+      });
+    });
+    resume.projects.forEach((proj, entryIndex) => {
+      proj.bullets.forEach((text, bulletIndex) => {
+        bullets.push({ section: "projects", entryIndex, bulletIndex, text, ...analyzeBullet(text) });
+      });
+    });
+
+    res.json({ bullets });
+  } catch (err) {
+    res.status(500).json({ error: "Something went wrong checking bullet quality" });
   }
 });
 

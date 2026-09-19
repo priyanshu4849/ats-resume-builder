@@ -77,6 +77,7 @@ export const api = {
   listResumes: (token) => request("/resumes", { token }),
   createResume: (body, token) => request("/resumes", { method: "POST", body, token }),
   getResume: (id, token) => request(`/resumes/${id}`, { token }),
+  getBulletQuality: (id, token) => request(`/resumes/${id}/bullet-quality`, { token }),
   updateResume: (id, body, token) => request(`/resumes/${id}`, { method: "PATCH", body, token }),
   deleteResume: (id, token) => request(`/resumes/${id}`, { method: "DELETE", token }),
   uploadResume: uploadResumeFile,
