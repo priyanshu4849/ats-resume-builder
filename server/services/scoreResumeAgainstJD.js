@@ -26,12 +26,14 @@ async function scoreResumeAgainstJD(resume, jobDescription) {
 Compare the resume data below against the job description. Return ONLY a valid JSON object (no markdown code fences, no commentary) matching exactly this shape:
 {
   "matchScore": 0,
+  "matchedKeywords": [""],
   "missingKeywords": [""],
   "weakBullets": [ { "text": "", "reason": "" } ]
 }
 
 Rules:
 - "matchScore" is an integer from 0 to 100 representing how well the resume matches the job description's requirements.
+- "matchedKeywords" lists important skills/technologies/terms from the job description that ARE present in the resume (in skills, bullets, or elsewhere).
 - "missingKeywords" lists important skills/technologies/terms from the job description that are absent from the resume.
 - "weakBullets" identifies up to 3 existing bullet points (copy them exactly from "allBullets" below) that are vague, unquantified, or don't align with the job description, along with a short reason why each is weak.
 - Output nothing except the JSON object itself.
@@ -80,6 +82,7 @@ ${jobDescription}
 
   return {
     matchScore: typeof parsed.matchScore === "number" ? parsed.matchScore : 0,
+    matchedKeywords: parsed.matchedKeywords || [],
     missingKeywords: parsed.missingKeywords || [],
     weakBullets: parsed.weakBullets || [],
   };

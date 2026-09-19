@@ -55,6 +55,7 @@ const resumeSchema = new mongoose.Schema(
       {
         jdText: { type: String, required: true },
         matchScore: { type: Number, required: true },
+        matchedKeywords: [{ type: String }],
         missingKeywords: [{ type: String }],
         weakBullets: [
           {
@@ -62,6 +63,13 @@ const resumeSchema = new mongoose.Schema(
             reason: { type: String },
           },
         ],
+        categories: {
+          keywords: { score: Number, verdict: String, reason: String },
+          formatting: { score: Number, verdict: String, reason: String },
+          actionVerbs: { score: Number, verdict: String, reason: String },
+          quantifiedImpact: { score: Number, verdict: String, reason: String },
+          length: { score: Number, verdict: String, reason: String },
+        },
         createdAt: { type: Date, default: Date.now },
       },
     ],

@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { HatchButton } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
+import { ScoreGauge } from "../components/ScoreGauge";
+import { CategoryBar } from "../components/CategoryBar";
 import { neoCardClass, neoTextareaClass } from "../lib/theme";
 
 export function AnalyzePage() {
@@ -197,17 +199,18 @@ export function AnalyzePage() {
             className="space-y-6"
           >
             <div className={`p-5 ${neoCardClass}`}>
-              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-2">Match Score</h2>
-              <div className="flex items-center gap-3">
-                <motion.div
-                  initial={{ scale: 0.6, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="text-3xl font-extrabold text-slate-900 dark:text-slate-100"
-                >
-                  {analysis.matchScore}
-                </motion.div>
-                <div className="text-slate-700 dark:text-slate-400 font-medium">/ 100</div>
+              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-3">ATS Score</h2>
+              <div className="flex flex-wrap items-center gap-8">
+                <ScoreGauge value={analysis.matchScore} />
+                {analysis.categories && (
+                  <div className="flex-1 min-w-[240px] space-y-3">
+                    <CategoryBar label="Keywords" {...analysis.categories.keywords} />
+                    <CategoryBar label="Formatting" {...analysis.categories.formatting} />
+                    <CategoryBar label="Action Verbs" {...analysis.categories.actionVerbs} />
+                    <CategoryBar label="Quantified Impact" {...analysis.categories.quantifiedImpact} />
+                    <CategoryBar label="Length" {...analysis.categories.length} />
+                  </div>
+                )}
               </div>
             </div>
 

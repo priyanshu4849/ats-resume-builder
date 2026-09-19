@@ -5,6 +5,7 @@ const Resume = require("../models/Resume");
 const parseResumeFile = require("../services/parseResumeFile");
 const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
+const scoreResumeCategories = require("../services/scoreResumeCategories");
 const rewriteBullet = require("../services/rewriteBullet");
 const rewriteResumeForJD = require("../services/rewriteResumeForJD");
 const generateResumePDF = require("../services/generateResumePDF");
@@ -79,12 +80,18 @@ router.post("/:id/analyze", requireAuth, heavyLimiter, async (req, res) => {
     }
 
     const result = await scoreResumeAgainstJD(resume, jobDescription);
+    const categories = scoreResumeCategories(resume, {
+      matchedKeywords: result.matchedKeywords,
+      missingKeywords: result.missingKeywords,
+    });
 
     resume.atsAnalyses.push({
       jdText: jobDescription,
       matchScore: result.matchScore,
+      matchedKeywords: result.matchedKeywords,
       missingKeywords: result.missingKeywords,
       weakBullets: result.weakBullets,
+      categories,
     });
     await resume.save();
 
