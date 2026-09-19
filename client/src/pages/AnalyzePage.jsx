@@ -8,7 +8,22 @@ import { HatchButton } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
 import { ScoreGauge } from "../components/ScoreGauge";
 import { CategoryBar } from "../components/CategoryBar";
+import { BulletRewriteCard } from "../components/BulletRewriteCard";
 import { neoCardClass, neoTextareaClass } from "../lib/theme";
+
+// Weak-bullet suggestions only carry the bullet's text, not its position, so
+// accepting one has to re-find it in the current resume by exact match.
+function locateBulletInResume(resume, bulletText) {
+  for (let i = 0; i < resume.experience.length; i++) {
+    const bulletIndex = resume.experience[i].bullets.indexOf(bulletText);
+    if (bulletIndex !== -1) return { section: "experience", entryIndex: i, bulletIndex };
+  }
+  for (let i = 0; i < resume.projects.length; i++) {
+    const bulletIndex = resume.projects[i].bullets.indexOf(bulletText);
+    if (bulletIndex !== -1) return { section: "projects", entryIndex: i, bulletIndex };
+  }
+  return null;
+}
 
 export function AnalyzePage() {
   const { id } = useParams();
@@ -23,6 +38,7 @@ export function AnalyzePage() {
   const [suggestions, setSuggestions] = useState({});
   const [rewritingIndex, setRewritingIndex] = useState(null);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [appliedBullets, setAppliedBullets] = useState(new Set());
 
   const [rewritingResume, setRewritingResume] = useState(false);
   const [rewriteResult, setRewriteResult] = useState(null);
@@ -104,14 +120,7 @@ export function AnalyzePage() {
     }
   }
 
-  async function handleToggleFix(bulletText) {
-    if (openFixBullet === bulletText) {
-      setOpenFixBullet(null);
-      return;
-    }
-    setOpenFixBullet(bulletText);
-    if (bulletFixes[bulletText] || !jobDescription.trim()) return;
-
+  async function fetchInlineFix(bulletText) {
     setFixingBullet(bulletText);
     try {
       const data = await api.rewriteBullet(id, bulletText, jobDescription, token);
@@ -123,6 +132,74 @@ export function AnalyzePage() {
     }
   }
 
+  async function handleToggleFix(bulletText) {
+    if (openFixBullet === bulletText) {
+      setOpenFixBullet(null);
+      return;
+    }
+    setOpenFixBullet(bulletText);
+    if (bulletFixes[bulletText] || !jobDescription.trim()) return;
+    await fetchInlineFix(bulletText);
+  }
+
+  function handleRejectInlineFix(bulletText) {
+    setBulletFixes((prev) => {
+      const next = { ...prev };
+      delete next[bulletText];
+      return next;
+    });
+    setOpenFixBullet(null);
+  }
+
+  // Shared by both suggestion surfaces (the LLM's top-3 weak bullets and the
+  // full inline "Your Resume" view) — accepting always means: find this exact
+  // bullet in the current resume and overwrite it in place.
+  async function applyBulletRewrite(originalText, improvedText) {
+    const location = locateBulletInResume(resume, originalText);
+    if (!location) {
+      throw new Error("Couldn't find this bullet in your resume anymore — it may have changed.");
+    }
+    const updatedExperience = resume.experience.map((exp) => ({ ...exp, bullets: [...exp.bullets] }));
+    const updatedProjects = resume.projects.map((proj) => ({ ...proj, bullets: [...proj.bullets] }));
+    const target = location.section === "experience" ? updatedExperience : updatedProjects;
+    target[location.entryIndex].bullets[location.bulletIndex] = improvedText;
+
+    const data = await api.updateResume(id, { experience: updatedExperience, projects: updatedProjects }, token);
+    setResume(data.resume);
+    loadBulletQuality();
+  }
+
+  async function handleAcceptInlineFix(bulletText) {
+    try {
+      await applyBulletRewrite(bulletText, bulletFixes[bulletText].improved);
+      setBulletFixes((prev) => {
+        const next = { ...prev };
+        delete next[bulletText];
+        return next;
+      });
+      setOpenFixBullet(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleAcceptSuggestion(index, bulletText) {
+    try {
+      await applyBulletRewrite(bulletText, suggestions[index].improved);
+      setAppliedBullets((prev) => new Set(prev).add(bulletText));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function handleRejectSuggestion(index) {
+    setSuggestions((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
+  }
+
   function renderBulletLine(bulletText, key) {
     const quality = bulletQuality.find((b) => b.text === bulletText);
     const hasIssues = Boolean(quality && quality.issues.length > 0);
@@ -130,51 +207,53 @@ export function AnalyzePage() {
     const fix = bulletFixes[bulletText];
 
     return (
-      <li key={key} className="text-sm">
-        <button
-          type="button"
-          onClick={() => hasIssues && handleToggleFix(bulletText)}
-          title={hasIssues ? quality.issues.join(" · ") : undefined}
-          className={`text-left text-slate-900 dark:text-slate-100 ${
-            hasIssues
-              ? "underline decoration-wavy decoration-red-500 decoration-2 underline-offset-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 rounded"
-              : "cursor-default"
-          }`}
-        >
-          {bulletText}
-        </button>
-        <AnimatePresence>
-          {isOpen && hasIssues && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-1 ml-2 pl-3 border-l-[3px] border-red-400 dark:border-red-600 overflow-hidden"
-            >
-              <p className="text-xs text-red-700 dark:text-red-400 mb-1 py-1">
-                {quality.issues.join(" · ")}
-              </p>
-              {!jobDescription.trim() ? (
-                <p className="text-xs text-slate-500 dark:text-slate-500 pb-1">
-                  Paste a job description above and analyze to get a tailored fix.
+      <div key={key} className="flex gap-2 text-sm">
+        <span className="text-slate-900 dark:text-slate-100 select-none leading-[1.6]">&bull;</span>
+        <div className="flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={() => hasIssues && handleToggleFix(bulletText)}
+            title={hasIssues ? quality.issues.join(" · ") : undefined}
+            className={`text-left text-slate-900 dark:text-slate-100 ${
+              hasIssues
+                ? "underline decoration-wavy decoration-red-500 decoration-2 underline-offset-4 cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 rounded"
+                : "cursor-default"
+            }`}
+          >
+            {bulletText}
+          </button>
+          <AnimatePresence>
+            {isOpen && hasIssues && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-1 ml-2 pl-3 border-l-[3px] border-red-400 dark:border-red-600 overflow-hidden"
+              >
+                <p className="text-xs text-red-700 dark:text-red-400 mb-1 py-1">
+                  {quality.issues.join(" · ")}
                 </p>
-              ) : fixingBullet === bulletText ? (
-                <p className="text-xs text-slate-600 dark:text-slate-400 pb-1">Thinking...</p>
-              ) : fix ? (
-                <div className="bg-emerald-50 dark:bg-emerald-950/30 border-[3px] border-emerald-800 dark:border-emerald-600 rounded-xl p-2 mb-1">
-                  <p className="text-sm text-emerald-900 dark:text-emerald-300 font-semibold mb-1">
-                    {fix.improved}
+                {fix ? (
+                  <BulletRewriteCard
+                    original={bulletText}
+                    suggestion={fix}
+                    regenerating={fixingBullet === bulletText}
+                    onAccept={() => handleAcceptInlineFix(bulletText)}
+                    onReject={() => handleRejectInlineFix(bulletText)}
+                    onRegenerate={() => fetchInlineFix(bulletText)}
+                  />
+                ) : fixingBullet === bulletText ? (
+                  <p className="text-xs text-slate-600 dark:text-slate-400 pb-1">Thinking...</p>
+                ) : !jobDescription.trim() ? (
+                  <p className="text-xs text-slate-500 dark:text-slate-500 pb-1">
+                    Paste a job description above and analyze to get a tailored fix.
                   </p>
-                  <p className="text-xs text-emerald-800 dark:text-emerald-500 mb-2">{fix.reason}</p>
-                  <NeoButton size="sm" onClick={() => handleCopy(`inline-${bulletText}`, fix.improved)}>
-                    {copiedIndex === `inline-${bulletText}` ? "Copied!" : "Copy"}
-                  </NeoButton>
-                </div>
-              ) : null}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </li>
+                ) : null}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     );
   }
 
@@ -428,43 +507,32 @@ export function AnalyzePage() {
                       </p>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">{bullet.reason}</p>
 
-                      <AnimatePresence mode="wait">
-                        {suggestions[i] ? (
-                          <motion.div
-                            key="suggestion"
-                            initial={{ opacity: 0, scale: 0.97 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.2 }}
-                            className="bg-emerald-50 dark:bg-emerald-950/30 border-[3px] border-emerald-800 dark:border-emerald-600 rounded-2xl p-3 mt-2"
-                          >
-                            <p className="text-sm text-emerald-900 dark:text-emerald-300 font-semibold mb-1">
-                              {suggestions[i].improved}
-                            </p>
-                            <p className="text-xs text-emerald-800 dark:text-emerald-500 mb-2">
-                              {suggestions[i].reason}
-                            </p>
-                            <NeoButton size="sm" onClick={() => handleCopy(i, suggestions[i].improved)}>
-                              {copiedIndex === i ? "Copied!" : "Copy"}
-                            </NeoButton>
-                          </motion.div>
-                        ) : (
-                          <NeoButton
-                            key="button"
-                            size="sm"
-                            onClick={() => handleGetSuggestion(i, bullet.text)}
-                            disabled={rewritingIndex === i}
-                          >
-                            {rewritingIndex === i ? "Rewriting..." : "Get rewrite suggestion"}
-                          </NeoButton>
-                        )}
-                      </AnimatePresence>
+                      {appliedBullets.has(bullet.text) ? (
+                        <BulletRewriteCard applied />
+                      ) : suggestions[i] ? (
+                        <BulletRewriteCard
+                          original={bullet.text}
+                          suggestion={suggestions[i]}
+                          regenerating={rewritingIndex === i}
+                          onAccept={() => handleAcceptSuggestion(i, bullet.text)}
+                          onReject={() => handleRejectSuggestion(i)}
+                          onRegenerate={() => handleGetSuggestion(i, bullet.text)}
+                        />
+                      ) : (
+                        <NeoButton
+                          size="sm"
+                          onClick={() => handleGetSuggestion(i, bullet.text)}
+                          disabled={rewritingIndex === i}
+                        >
+                          {rewritingIndex === i ? "Rewriting..." : "Get rewrite suggestion"}
+                        </NeoButton>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
               <p className="text-xs text-slate-600 dark:text-slate-500 mt-4">
-                Like a suggestion? Copy it and paste it into the matching bullet on the resume
-                editor page &mdash; nothing here is saved automatically.
+                Accept saves the rewrite straight to your resume &mdash; nothing changes until you do.
               </p>
             </div>
 
@@ -481,17 +549,17 @@ export function AnalyzePage() {
                         {exp.role}
                         {exp.company ? ` @ ${exp.company}` : ""}
                       </p>
-                      <ul className="mt-1 space-y-1.5 list-disc list-inside">
+                      <div className="mt-1 space-y-1.5">
                         {exp.bullets.map((bulletText, j) => renderBulletLine(bulletText, `exp-${i}-${j}`))}
-                      </ul>
+                      </div>
                     </div>
                   ))}
                   {resume.projects.map((proj, i) => (
                     <div key={`proj-${i}`}>
                       <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{proj.name}</p>
-                      <ul className="mt-1 space-y-1.5 list-disc list-inside">
+                      <div className="mt-1 space-y-1.5">
                         {proj.bullets.map((bulletText, j) => renderBulletLine(bulletText, `proj-${i}-${j}`))}
-                      </ul>
+                      </div>
                     </div>
                   ))}
                 </div>
