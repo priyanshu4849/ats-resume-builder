@@ -95,5 +95,11 @@ export const api = {
       body: { jobDescription, weakBullets, missingKeywords },
       token,
     }),
+  suggestKeywordPlacement: (id, keyword, jobDescription, token) =>
+    request(`/resumes/${id}/suggest-keyword-placement`, {
+      method: "POST",
+      body: { keyword, jobDescription },
+      token,
+    }),
   exportResumePDF,
 };

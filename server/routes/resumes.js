@@ -8,6 +8,7 @@ const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const scoreResumeCategories = require("../services/scoreResumeCategories");
 const rewriteBullet = require("../services/rewriteBullet");
 const rewriteResumeForJD = require("../services/rewriteResumeForJD");
+const suggestKeywordPlacement = require("../services/suggestKeywordPlacement");
 const generateResumePDF = require("../services/generateResumePDF");
 const { TEMPLATE_NAMES } = require("../services/templates");
 const { heavyLimiter } = require("../middleware/rateLimit");
@@ -119,6 +120,26 @@ router.post("/:id/rewrite-bullet", requireAuth, heavyLimiter, async (req, res) =
     res.json({ suggestion });
   } catch (err) {
     res.status(500).json({ error: err.message || "Something went wrong rewriting the bullet" });
+  }
+});
+
+router.post("/:id/suggest-keyword-placement", requireAuth, heavyLimiter, async (req, res) => {
+  try {
+    const { keyword, jobDescription } = req.body;
+
+    if (!keyword || !jobDescription) {
+      return res.status(400).json({ error: "keyword and jobDescription are required" });
+    }
+
+    const resume = await Resume.findOne({ _id: req.params.id, userId: req.userId });
+    if (!resume) {
+      return res.status(404).json({ error: "Resume not found" });
+    }
+
+    const suggestion = await suggestKeywordPlacement(resume, keyword, jobDescription);
+    res.json({ suggestion });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Something went wrong suggesting a placement" });
   }
 });
 

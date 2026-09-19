@@ -32,6 +32,9 @@ export function AnalyzePage() {
   const [applySuccess, setApplySuccess] = useState("");
   const [downloading, setDownloading] = useState(false);
 
+  const [keywordSuggestions, setKeywordSuggestions] = useState({});
+  const [loadingKeyword, setLoadingKeyword] = useState(null);
+
   useEffect(() => {
     api.getResume(id, token).then((data) => setResume(data.resume)).catch((err) => setError(err.message));
   }, [id]);
@@ -44,6 +47,7 @@ export function AnalyzePage() {
     setSuggestions({});
     setRewriteResult(null);
     setApplySuccess("");
+    setKeywordSuggestions({});
     try {
       const data = await api.analyzeResume(id, jobDescription, token);
       setAnalysis(data.analysis);
@@ -51,6 +55,18 @@ export function AnalyzePage() {
       setError(err.message);
     } finally {
       setAnalyzing(false);
+    }
+  }
+
+  async function handleSuggestKeywordPlacement(keyword) {
+    setLoadingKeyword(keyword);
+    try {
+      const data = await api.suggestKeywordPlacement(id, keyword, jobDescription, token);
+      setKeywordSuggestions((prev) => ({ ...prev, [keyword]: data.suggestion }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingKeyword(null);
     }
   }
 
@@ -215,24 +231,98 @@ export function AnalyzePage() {
             </div>
 
             <div className={`p-5 ${neoCardClass}`}>
-              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-3">Missing Keywords</h2>
-              {analysis.missingKeywords.length === 0 ? (
-                <p className="text-sm text-slate-700 dark:text-slate-400">None &mdash; good coverage.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {analysis.missingKeywords.map((keyword, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="text-sm font-semibold bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-[3px] border-slate-900 dark:border-slate-100 rounded-full px-3 py-1"
-                    >
-                      {keyword}
-                    </motion.span>
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const matched = analysis.matchedKeywords || [];
+                const missing = analysis.missingKeywords || [];
+                const total = matched.length + missing.length;
+                const percent = total === 0 ? 100 : Math.round((matched.length / total) * 100);
+                return (
+                  <>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="font-bold text-slate-900 dark:text-slate-100">Keyword Match</h2>
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                        {matched.length}/{total} &middot; {percent}%
+                      </span>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-2">
+                          Found in your resume
+                        </h3>
+                        {matched.length === 0 ? (
+                          <p className="text-sm text-slate-600 dark:text-slate-400">None yet.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {matched.map((keyword, i) => (
+                              <motion.span
+                                key={keyword}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.04 }}
+                                className="text-sm font-semibold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-[3px] border-emerald-700 dark:border-emerald-500 rounded-full px-3 py-1"
+                              >
+                                {keyword}
+                              </motion.span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wide text-red-700 dark:text-red-400 mb-2">
+                          Missing &mdash; click for a suggestion
+                        </h3>
+                        {missing.length === 0 ? (
+                          <p className="text-sm text-slate-600 dark:text-slate-400">None &mdash; good coverage.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {missing.map((keyword, i) => (
+                              <motion.button
+                                key={keyword}
+                                type="button"
+                                onClick={() => handleSuggestKeywordPlacement(keyword)}
+                                disabled={loadingKeyword === keyword}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.04 }}
+                                whileHover={{ scale: 1.04 }}
+                                className="text-sm font-semibold bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300 border-[3px] border-red-700 dark:border-red-500 rounded-full px-3 py-1 disabled:opacity-60"
+                              >
+                                {loadingKeyword === keyword ? "Thinking..." : keyword}
+                              </motion.button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {Object.keys(keywordSuggestions).length > 0 && (
+                      <div className="space-y-2 mt-4">
+                        {Object.entries(keywordSuggestions).map(([keyword, suggestion]) => (
+                          <motion.div
+                            key={keyword}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white dark:bg-slate-800 border-[3px] border-slate-900 dark:border-slate-100 rounded-2xl p-3"
+                          >
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+                              {keyword}
+                              {suggestion.location === "bullet" ? " — rework this bullet" : " — add to Skills"}
+                            </p>
+                            {suggestion.bulletText && (
+                              <p className="text-xs text-slate-500 dark:text-slate-500 italic mb-1">
+                                &ldquo;{suggestion.bulletText}&rdquo;
+                              </p>
+                            )}
+                            <p className="text-sm text-slate-700 dark:text-slate-300">{suggestion.suggestion}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <div className={`p-5 ${neoCardClass}`}>
