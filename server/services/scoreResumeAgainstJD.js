@@ -18,6 +18,55 @@ function buildResumeSummary(resume) {
   };
 }
 
+// Claude sometimes ignores "no markdown fences" and wraps its answer in
+// ```json ... ``` anyway — strip that before hunting for the JSON object.
+function stripCodeFences(text) {
+  return text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+}
+
+async function callClaudeForScore(prompt) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": process.env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Claude API request failed (${response.status}): ${errorBody}`);
+  }
+
+  const data = await response.json();
+  const rawText = stripCodeFences(data.content[0].text.trim());
+
+  if (data.stop_reason === "max_tokens") {
+    throw new Error("Claude's response was cut off before it finished (hit the token limit)");
+  }
+
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Claude did not return a parseable JSON object");
+  }
+
+  try {
+    return JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    // Keep the raw text in the server logs — the error shown to the user
+    // can't include it (too noisy), but it's exactly what you'd want to see
+    // on Render's log tab if this happens again.
+    console.error("Failed to parse JSON from Claude (scoreResumeAgainstJD):", rawText);
+    throw new Error("Failed to parse JSON returned by Claude");
+  }
+}
+
 async function scoreResumeAgainstJD(resume, jobDescription) {
   const resumeSummary = buildResumeSummary(resume);
 
@@ -46,38 +95,14 @@ Job description:
 ${jobDescription}
 """`;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Claude API request failed (${response.status}): ${errorBody}`);
-  }
-
-  const data = await response.json();
-  const rawText = data.content[0].text;
-
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Claude did not return a parseable JSON object");
-  }
-
+  // Malformed JSON from an LLM is usually a one-off generation hiccup, not a
+  // persistent problem — one retry clears most of them without the user
+  // having to click Analyze again themselves.
   let parsed;
   try {
-    parsed = JSON.parse(jsonMatch[0]);
+    parsed = await callClaudeForScore(prompt);
   } catch (err) {
-    throw new Error("Failed to parse JSON returned by Claude");
+    parsed = await callClaudeForScore(prompt);
   }
 
   return {
