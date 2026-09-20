@@ -17,6 +17,9 @@ router.post("/register", authLimiter, async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({ error: "name, email, and password are required" });
     }
+    if (typeof email !== "string" || typeof password !== "string" || typeof name !== "string") {
+      return res.status(400).json({ error: "name, email, and password must be strings" });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -46,6 +49,9 @@ router.post("/login", authLimiter, async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: "email and password are required" });
+    }
+    if (typeof email !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "email and password must be strings" });
     }
 
     const user = await User.findOne({ email });
@@ -77,6 +83,9 @@ router.post("/forgot-password", authLimiter, async (req, res) => {
 
     if (!email) {
       return res.status(400).json({ error: "email is required" });
+    }
+    if (typeof email !== "string") {
+      return res.status(400).json({ error: "email must be a string" });
     }
 
     const user = await User.findOne({ email });
@@ -121,6 +130,9 @@ router.post("/reset-password", authLimiter, async (req, res) => {
 
     if (!token || !password) {
       return res.status(400).json({ error: "token and password are required" });
+    }
+    if (typeof token !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "token and password must be strings" });
     }
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");

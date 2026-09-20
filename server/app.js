@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
 const resumeRoutes = require("./routes/resumes");
@@ -8,7 +9,12 @@ const app = express();
 // Render sits behind a reverse proxy; without this, every request looks like
 // it comes from the same internal IP, which breaks per-IP rate limiting.
 app.set("trust proxy", 1);
-app.use(cors());
+app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {

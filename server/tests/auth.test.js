@@ -33,6 +33,14 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("rejects a NoSQL injection object in place of the email string", async () => {
+    const res = await request(app)
+      .post("/api/auth/register")
+      .send({ name: "Attacker", email: { $ne: null }, password: "password123" });
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("POST /api/auth/login", () => {
@@ -55,6 +63,14 @@ describe("POST /api/auth/login", () => {
       .send({ email: validUser.email, password: "wrongpassword" });
 
     expect(res.status).toBe(401);
+  });
+
+  it("rejects a NoSQL injection object in place of the email string", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: { $ne: null }, password: "anything" });
+
+    expect(res.status).toBe(400);
   });
 });
 
@@ -102,6 +118,19 @@ describe("POST /api/auth/forgot-password", () => {
   it("rejects a missing email", async () => {
     const res = await request(app).post("/api/auth/forgot-password").send({});
     expect(res.status).toBe(400);
+  });
+
+  it("rejects a NoSQL injection object in place of the email string", async () => {
+    await request(app).post("/api/auth/register").send(validUser);
+
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: { $ne: null } });
+
+    expect(res.status).toBe(400);
+
+    const user = await User.findOne({ email: validUser.email }).select("+resetPasswordToken");
+    expect(user.resetPasswordToken).toBeFalsy();
   });
 });
 
