@@ -56,12 +56,14 @@ export function DashboardPage() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Your Resumes</h1>
-        <NeoButton onClick={() => navigate("/resumes/upload")}>Upload existing resume</NeoButton>
+        <NeoButton className="w-full sm:w-auto" onClick={() => navigate("/resumes/upload")}>
+          Upload existing resume
+        </NeoButton>
       </div>
 
-      <form onSubmit={handleCreate} className="flex gap-3 mb-8">
+      <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3 mb-8">
         <input
           type="text"
           placeholder="New resume title (e.g. Frontend Developer Resume)"
@@ -70,7 +72,7 @@ export function DashboardPage() {
           onChange={(e) => setNewTitle(e.target.value)}
           className={`flex-1 ${neoInputClass}`}
         />
-        <HatchButton type="submit" disabled={creating}>
+        <HatchButton className="w-full sm:w-auto" type="submit" disabled={creating}>
           {creating ? "Creating..." : "Create blank"}
         </HatchButton>
       </form>
@@ -101,10 +103,10 @@ export function DashboardPage() {
             <motion.li key={resume._id} variants={itemVariants}>
               <button
                 onClick={() => navigate(`/resumes/${resume._id}`)}
-                className="w-full text-left px-5 py-4 hover:bg-white/50 dark:hover:bg-slate-900/50 flex items-center justify-between transition-colors"
+                className="w-full text-left px-5 py-4 hover:bg-white/50 dark:hover:bg-slate-900/50 flex items-center justify-between gap-3 transition-colors"
               >
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{resume.title}</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-100 rounded-full px-2 py-0.5 uppercase tracking-wide">
+                <span className="font-semibold text-slate-900 dark:text-slate-100 truncate min-w-0">{resume.title}</span>
+                <span className="shrink-0 text-xs font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-800 border-2 border-slate-900 dark:border-slate-100 rounded-full px-2 py-0.5 uppercase tracking-wide">
                   {resume.source}
                 </span>
               </button>

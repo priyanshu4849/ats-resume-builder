@@ -64,12 +64,17 @@ export function UploadPage() {
         />
 
         <div className="flex items-center gap-3 mb-4">
-          <NeoButton type="button" size="sm" onClick={() => fileInputRef.current.click()}>
+          <NeoButton
+            type="button"
+            size="sm"
+            className="shrink-0"
+            onClick={() => fileInputRef.current.click()}
+          >
             Choose file
           </NeoButton>
           <span
             aria-live="polite"
-            className="text-sm text-slate-800 dark:text-slate-200 font-medium truncate"
+            className="flex-1 min-w-0 text-sm text-slate-800 dark:text-slate-200 font-medium truncate"
           >
             {file ? file.name : "No file chosen"}
           </span>
