@@ -10,9 +10,12 @@ const app = express();
 // it comes from the same internal IP, which breaks per-IP rate limiting.
 app.set("trust proxy", 1);
 app.use(helmet());
+// Falls back to the known frontend URL if CLIENT_URL isn't set — the `cors`
+// package treats `origin: undefined` as "trust no one" (not "trust everyone"
+// like you'd expect), so a missing env var must not leave this blank.
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "https://ats-resume-builder-ten-xi.vercel.app",
   })
 );
 app.use(express.json());
