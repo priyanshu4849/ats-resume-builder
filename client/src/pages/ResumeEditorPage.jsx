@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { hatchButtonClass } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import { neoCardClass, neoInputClass, neoTextareaClass } from "../lib/theme";
 
 const emptyEducation = { school: "", degree: "", startDate: "", endDate: "", gpa: "" };
@@ -173,7 +174,7 @@ export function ResumeEditorPage() {
   if (loading) {
     return (
       <Layout>
-        <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+        <LoadingSpinner label="Loading your resume..." />
       </Layout>
     );
   }

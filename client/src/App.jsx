@@ -9,6 +9,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { UploadPage } from "./pages/UploadPage";
 import { ResumeEditorPage } from "./pages/ResumeEditorPage";
 import { AnalyzePage } from "./pages/AnalyzePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function HomeRoute() {
@@ -56,6 +57,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
