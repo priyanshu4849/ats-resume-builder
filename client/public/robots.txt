@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ats-resume-builder-ten-xi.vercel.app/sitemap.xml

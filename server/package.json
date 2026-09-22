@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --runInBand",
     "postinstall": "npx puppeteer browsers install chrome",
-    "generate:previews": "node scripts/generateTemplatePreviews.js"
+    "generate:previews": "node scripts/generateTemplatePreviews.js",
+    "generate:og-image": "node scripts/generateOGImage.js"
   },
   "jest": {
     "testEnvironment": "node",
