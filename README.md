@@ -1,6 +1,6 @@
 # ATS Resume Builder
 
-A full-stack MERN application that helps you build, upload, and optimize resumes against real job descriptions using AI. It parses uploaded resumes into structured data, scores them against a job description like an Applicant Tracking System (ATS) would, suggests AI-rewritten bullet points, and exports a clean, ATS-safe PDF in one of three templates.
+A full stack MERN application that helps you build, upload, and optimize resumes against real job descriptions using AI. It parses uploaded resumes into structured data, scores them against a job description like an Applicant Tracking System (ATS) would, suggests AI rewritten bullet points, and exports a clean, ATS safe PDF in one of three templates.
 
 **Live demo:** [ats-resume-builder-ten-xi.vercel.app](https://ats-resume-builder-ten-xi.vercel.app)
 
@@ -10,11 +10,11 @@ A full-stack MERN application that helps you build, upload, and optimize resumes
 
 - **Build from scratch** — a guided editor for personal info, education, experience, projects, and skills.
 - **Upload an existing resume** — upload a PDF or DOCX and have it parsed into the same editable structure using Claude.
-- **ATS match analysis** — paste a job description and get a 0–100 match score, a list of missing keywords, and up to three flagged weak bullet points with reasons.
-- **AI bullet rewriting** — get an ATS-aligned rewrite of any flagged bullet, shown as a suggestion you copy in yourself — nothing is ever auto-overwritten.
-- **PDF export, 3 templates** — Classic (plain, timeless), Modern (accent color, skill pills), and Minimal (compact spacing) — all single-column and ATS-safe (no tables, columns, or graphics that break resume parsers).
-- **Auth** — JWT-based register/login, resumes scoped to their owner.
-- **Dark mode** — system-aware by default, with a manual toggle that persists.
+- **ATS match analysis** — paste a job description and get a 0 to 100 match score, a list of missing keywords, and up to three flagged weak bullet points with reasons.
+- **AI bullet rewriting** — get an ATS aligned rewrite of any flagged bullet, shown as a suggestion you copy in yourself nothing is ever auto overwritten.
+- **PDF export, 3 templates** — Classic (plain, timeless), Modern (accent color, skill pills), and Minimal (compact spacing) all single column and ATS safe (no tables, columns, or graphics that break resume parsers).
+- **Auth** — JWT based register/login, resumes scoped to their owner.
+- **Dark mode** — system aware by default, with a manual toggle that persists.
 
 ---
 
@@ -26,14 +26,14 @@ A full-stack MERN application that helps you build, upload, and optimize resumes
 | Backend | Node.js, Express 5 |
 | Database | MongoDB (Mongoose) |
 | Auth | JWT + bcrypt |
-| File parsing | multer (upload), pdf-parse (PDF text), mammoth (DOCX text) |
+| File parsing | multer (upload), pdf parse (PDF text), mammoth (DOCX text) |
 | AI | Anthropic Claude API (resume extraction, ATS scoring, bullet rewriting) |
-| PDF export | Puppeteer (renders a server-side HTML template to PDF) |
+| PDF export | Puppeteer (renders a server side HTML template to PDF) |
 | Deployment | Render (backend) + Vercel (frontend) |
 
 ### Why two separate apps
 
-The frontend and backend are deployed independently rather than as one app. The backend is a long-running Express process (it needs to stay alive to talk to MongoDB, Claude, and Puppeteer), so it lives on Render. The frontend is compiled by Vite into static HTML/CSS/JS with no server needed at runtime, so it's served from Vercel's CDN. The two only communicate over HTTP, via the API base URL configured through an environment variable (see below).
+The frontend and backend are deployed independently rather than as one app. The backend is a long running Express process (it needs to stay alive to talk to MongoDB, Claude, and Puppeteer), so it lives on Render. The frontend is compiled by Vite into static HTML/CSS/JS with no server needed at runtime, so it's served from Vercel's CDN. The two only communicate over HTTP, via the API base URL configured through an environment variable (see below).
 
 ---
 
@@ -60,7 +60,7 @@ ATS-resume/
     └── .puppeteerrc.cjs         # Puppeteer cache path (see Deployment notes)
 ```
 
-The template picker in the resume editor shows a screenshot of each template (`client/public/template-previews/*.png`) rather than plain text. These are generated once, not at runtime — if you change a template's HTML/CSS in `server/services/templates/`, regenerate them:
+The template picker in the resume editor shows a screenshot of each template (`client/public/template-previews/*.png`) rather than plain text. These are generated once, not at runtime if you change a template's HTML/CSS in `server/services/templates/`, regenerate them:
 
 ```bash
 cd server && npm run generate:previews
@@ -99,7 +99,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 JWT_SECRET=<any long random string>
 ```
 
-### 3. (Optional) Point the frontend at a non-default backend URL
+### 3. (Optional) Point the frontend at a non default backend URL
 
 The client defaults to `http://localhost:5050/api` in development. If your backend runs elsewhere, create `client/.env.local`:
 
@@ -188,6 +188,6 @@ Render's free tier spins down after inactivity, so the first request after idlin
 
 ---
 
-## Notes on ATS-safe design
+## Notes on ATS safe design
 
-The PDF templates are deliberately plain: single-column layout, no tables, no text-in-images, no multi-column sections. This isn't a style choice — real ATS parsers extract resume text by reading the document's structure, and tables/columns/graphics are exactly what causes them to misread or drop content. All three templates keep that constraint while varying typography, color, and density.
+The PDF templates are deliberately plain: single column layout, no tables, no text in images, no multi column sections. This isn't a style choice real ATS parsers extract resume text by reading the document's structure, and tables/columns/graphics are exactly what causes them to misread or drop content. All three templates keep that constraint while varying typography, color, and density.
