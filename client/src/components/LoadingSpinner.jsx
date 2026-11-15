@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 
-export function LoadingSpinner({ label = "Loading..." }) {
+export function LoadingSpinner({
+  label = "Loading...",
+  className = "text-slate-600 dark:text-slate-400",
+  role = "status",
+}) {
   return (
-    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400" role="status">
+    <div className={`flex items-center gap-3 ${className}`} role={role}>
       <motion.span
         animate={{ rotate: 360 }}
         transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}

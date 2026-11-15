@@ -66,7 +66,20 @@ async function exportResumePDF(id, token, template) {
   URL.revokeObjectURL(url);
 }
 
+// Resolves once the backend answers with { status: "ok" }. Parsing the body
+// (instead of only checking res.ok) matters: if Render ever answers with its
+// own HTML page while the server boots, res.json() throws and we retry.
+async function checkHealth(signal) {
+  const res = await fetch(`${BASE_URL}/health`, { signal, cache: "no-store" });
+  const data = await res.json();
+
+  if (!res.ok || data.status !== "ok") {
+    throw new Error("Server is not ready yet");
+  }
+}
+
 export const api = {
+  checkHealth,
   register: (body) => request("/auth/register", { method: "POST", body }),
   login: (body) => request("/auth/login", { method: "POST", body }),
   getMe: (token) => request("/users/me", { token }),

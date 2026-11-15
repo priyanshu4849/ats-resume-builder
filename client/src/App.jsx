@@ -11,6 +11,7 @@ import { ResumeEditorPage } from "./pages/ResumeEditorPage";
 import { AnalyzePage } from "./pages/AnalyzePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ServerWakeBanner } from "./components/ServerWakeBanner";
 
 function HomeRoute() {
   const { token } = useAuth();
@@ -19,46 +20,49 @@ function HomeRoute() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomeRoute />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/resumes/upload"
-        element={
-          <ProtectedRoute>
-            <UploadPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/resumes/:id"
-        element={
-          <ProtectedRoute>
-            <ResumeEditorPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/resumes/:id/analyze"
-        element={
-          <ProtectedRoute>
-            <AnalyzePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<HomeRoute />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resumes/upload"
+          element={
+            <ProtectedRoute>
+              <UploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resumes/:id"
+          element={
+            <ProtectedRoute>
+              <ResumeEditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/resumes/:id/analyze"
+          element={
+            <ProtectedRoute>
+              <AnalyzePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+      <ServerWakeBanner />
+    </>
   );
 }
 

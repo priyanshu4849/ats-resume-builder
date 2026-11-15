@@ -24,6 +24,14 @@ app.get("/", (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Pinged by the frontend on page load (to wake the server early) and by the
+// keep-alive GitHub Action. It skips the database on purpose so it stays fast
+// and works even while Mongo is still connecting after a cold start.
+app.get("/api/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ status: "ok" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/resumes", resumeRoutes);
