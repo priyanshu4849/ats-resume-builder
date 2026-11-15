@@ -10,6 +10,7 @@ import { ScoreGauge } from "../components/ScoreGauge";
 import { CategoryBar } from "../components/CategoryBar";
 import { BulletRewriteCard } from "../components/BulletRewriteCard";
 import { PastAnalyses } from "../components/PastAnalyses";
+import { ProgressSteps } from "../components/ProgressSteps";
 import { neoCardClass, neoTextareaClass } from "../lib/theme";
 import { formatAnalysisDate } from "../lib/formatAnalysisDate";
 
@@ -408,6 +409,29 @@ export function AnalyzePage() {
         >
           {error}
         </p>
+      )}
+
+      {analyzing && (
+        <ProgressSteps
+          className="mb-8"
+          title="Analyzing your resume"
+          steps={[
+            "Reading your resume",
+            "Comparing it with the job description",
+            "Finding weak bullets",
+            "Working out your score",
+          ]}
+          stepMs={900}
+        />
+      )}
+
+      {downloading && (
+        <ProgressSteps
+          className="mb-8"
+          title="Making your PDF"
+          steps={["Laying out your resume", "Rendering the PDF"]}
+          stepMs={3000}
+        />
       )}
 
       <PastAnalyses analyses={resume?.atsAnalyses} currentId={analysis?._id} onOpen={openAnalysis} />

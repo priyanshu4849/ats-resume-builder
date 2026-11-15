@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { HatchButton } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { DashboardSkeleton } from "../components/Skeleton";
 import { neoCardClass, neoInputClass } from "../lib/theme";
 
 const listVariants = {
@@ -88,7 +88,7 @@ export function DashboardPage() {
       )}
 
       {loading ? (
-        <LoadingSpinner label="Loading your resumes..." />
+        <DashboardSkeleton />
       ) : resumes.length === 0 ? (
         <p className="text-slate-600 dark:text-slate-400">
           No resumes yet. Create a blank one above, or upload an existing file.

@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { HatchButton } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
+import { ProgressSteps } from "../components/ProgressSteps";
 import { neoCardClass } from "../lib/theme";
 
 export function UploadPage() {
@@ -83,6 +84,15 @@ export function UploadPage() {
         <HatchButton type="submit" disabled={!file || uploading} className="w-full">
           {uploading ? "Processing..." : "Upload and parse"}
         </HatchButton>
+
+        {uploading && (
+          <ProgressSteps
+            className="mt-4"
+            title="Reading your resume"
+            steps={["Uploading your file", "Pulling out the text", "Sorting it into sections", "Saving your resume"]}
+            stepMs={1300}
+          />
+        )}
       </motion.form>
     </Layout>
   );

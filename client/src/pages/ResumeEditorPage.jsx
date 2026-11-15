@@ -6,7 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { hatchButtonClass } from "../components/HatchButton";
 import { NeoButton } from "../components/NeoButton";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { EditorSkeleton } from "../components/Skeleton";
+import { ProgressSteps } from "../components/ProgressSteps";
 import { neoCardClass, neoInputClass, neoTextareaClass } from "../lib/theme";
 
 const emptyEducation = { school: "", degree: "", startDate: "", endDate: "", gpa: "" };
@@ -49,6 +50,28 @@ function toCommaArray(text) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+// Fades each template preview in once it has downloaded, over a pulsing
+// placeholder, so the pictures don't pop in one by one.
+function TemplatePreview({ src, alt }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div
+      className={`w-full h-36 overflow-hidden rounded-lg border-2 border-slate-900/20 dark:border-slate-100/20 mb-2 ${
+        loaded ? "bg-white" : "bg-slate-200 dark:bg-slate-700 animate-pulse motion-reduce:animate-none"
+      }`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-auto object-cover object-top transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </div>
+  );
 }
 
 export function ResumeEditorPage() {
@@ -174,7 +197,7 @@ export function ResumeEditorPage() {
   if (loading) {
     return (
       <Layout>
-        <LoadingSpinner label="Loading your resume..." />
+        <EditorSkeleton />
       </Layout>
     );
   }
@@ -212,6 +235,15 @@ export function ResumeEditorPage() {
         </p>
       )}
 
+      {exporting && (
+        <ProgressSteps
+          className="mb-6"
+          title="Making your PDF"
+          steps={["Laying out your resume", "Rendering the PDF"]}
+          stepMs={3000}
+        />
+      )}
+
       {/* Template */}
       <Section title="PDF Template">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -228,13 +260,7 @@ export function ResumeEditorPage() {
                   : "border-slate-900/40 dark:border-slate-100/40 bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800"
               }`}
             >
-              <div className="w-full h-36 overflow-hidden rounded-lg border-2 border-slate-900/20 dark:border-slate-100/20 bg-white mb-2">
-                <img
-                  src={t.preview}
-                  alt={`${t.label} template preview`}
-                  className="w-full h-auto object-cover object-top"
-                />
-              </div>
+              <TemplatePreview src={t.preview} alt={`${t.label} template preview`} />
               <div className="font-bold text-slate-900 dark:text-slate-100">{t.label}</div>
               <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{t.description}</div>
             </motion.button>
