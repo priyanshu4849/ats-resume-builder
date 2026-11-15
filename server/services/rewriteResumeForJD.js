@@ -1,4 +1,5 @@
 const rewriteBullet = require("./rewriteBullet");
+const { knownSkillsFromResume } = rewriteBullet;
 
 // Weak bullets come back from the analysis as plain {text, reason} copies, not
 // as references into the resume document, so we have to re-find each one by
@@ -23,9 +24,10 @@ function locateBullet(resume, bulletText) {
 }
 
 async function rewriteResumeForJD(resume, jobDescription, weakBullets, missingKeywords) {
+  const knownSkills = knownSkillsFromResume(resume);
   const bulletRewrites = await Promise.all(
     weakBullets.map(async (weak) => {
-      const suggestion = await rewriteBullet(weak.text, jobDescription);
+      const suggestion = await rewriteBullet(weak.text, jobDescription, knownSkills);
       return { ...suggestion, location: locateBullet(resume, weak.text) };
     })
   );

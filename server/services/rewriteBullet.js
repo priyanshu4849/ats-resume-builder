@@ -1,7 +1,38 @@
-async function rewriteBullet(bulletText, jobDescription) {
-  const prompt = `You are an ATS resume writing coach.
+// Every skill the resume gives evidence for: the skills section plus each
+// project's tech stack. The rewrite prompt may only name tools from this list
+// (or from the bullet itself), so it can't borrow skills from the job posting.
+function knownSkillsFromResume(resume) {
+  const all = [
+    ...(resume?.skills || []),
+    ...(resume?.projects || []).flatMap((project) => project.techStack || []),
+  ];
+  const seen = new Set();
+  return all
+    .map((skill) => String(skill).trim())
+    .filter((skill) => {
+      const key = skill.toLowerCase();
+      if (!skill || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
 
-Rewrite the resume bullet point below so it is more ATS-aligned for the given job description: use strong action verbs, include relevant keywords naturally, and quantify impact where plausible.
+async function rewriteBullet(bulletText, jobDescription, knownSkills = []) {
+  const skillsLine = knownSkills.length ? knownSkills.join(", ") : "(none listed)";
+
+  const prompt = `You are helping someone improve one bullet point on their resume for a specific job.
+
+They will send this resume to employers and can be asked about any line of it in an interview, so every claim in the rewrite has to be true. All you know about their work is what the original bullet says and the skills listed on their resume. Treat everything else as unknown, even when the job description asks for it.
+
+What you should do:
+- Start with a strong action verb and make the wording clearer and more specific.
+- Where the bullet already describes something the job description asks for, use the job description's wording for it. For example, "fixed bugs in the frontend" can become "resolved UI bugs" when the job mentions UI bugs.
+- Name a tool, language or framework only if it appears in the original bullet or in their skills list below, and only where it fits the work the bullet describes.
+
+What you must not do:
+- Add a tool, language, framework or practice that is in neither the bullet nor the skills list just because the job description mentions it. That includes testing, code reviews, accessibility work and performance work. Leave unmatched job keywords out: the app shows missing keywords to the person separately so they can decide what's true for them.
+- Add numbers, results or improvements the bullet doesn't state or clearly imply.
+- Make the work sound bigger than it was. If the original is vague, the rewrite should be clearer, not grander.
 
 Return ONLY a valid JSON object (no markdown code fences, no commentary) matching exactly this shape:
 {
@@ -9,11 +40,14 @@ Return ONLY a valid JSON object (no markdown code fences, no commentary) matchin
   "reason": ""
 }
 
-Rules:
-- "improved" is the rewritten bullet point, as a single sentence, starting with a strong action verb.
-- "reason" is a short (one sentence) explanation of what changed and why.
-- Do not invent specific numbers or achievements that aren't implied by the original bullet. If quantifying isn't plausible, keep it qualitative.
+- "improved" is the rewritten bullet as a single sentence.
+- "reason" is one short sentence explaining what changed and why.
 - Output nothing except the JSON object itself.
+
+Their skills (from their resume):
+"""
+${skillsLine}
+"""
 
 Original bullet:
 """
@@ -67,3 +101,4 @@ ${jobDescription}
 }
 
 module.exports = rewriteBullet;
+module.exports.knownSkillsFromResume = knownSkillsFromResume;
