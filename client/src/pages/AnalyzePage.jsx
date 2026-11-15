@@ -9,7 +9,14 @@ import { NeoButton } from "../components/NeoButton";
 import { ScoreGauge } from "../components/ScoreGauge";
 import { CategoryBar } from "../components/CategoryBar";
 import { BulletRewriteCard } from "../components/BulletRewriteCard";
+import { PastAnalyses } from "../components/PastAnalyses";
 import { neoCardClass, neoTextareaClass } from "../lib/theme";
+import { formatAnalysisDate } from "../lib/formatAnalysisDate";
+
+// The analysis is saved in the same save that bumps resume.updatedAt, so the
+// two times are milliseconds apart. A bigger gap means something changed
+// after it: an edit, an accepted rewrite, or a newer analysis.
+const CHANGED_SINCE_MS = 5000;
 
 // Weak-bullet suggestions only carry the bullet's text, not its position, so
 // accepting one has to re-find it in the current resume by exact match.
@@ -60,23 +67,52 @@ export function AnalyzePage() {
     api.getBulletQuality(id, token).then((data) => setBulletQuality(data.bullets)).catch(() => {});
   }
 
+  // Clears everything tied to one particular analysis (rewrite suggestions,
+  // inline fixes, the bulk rewrite), so switching between analyses never
+  // mixes results that were written for two different jobs.
+  function resetAnalysisState() {
+    setError("");
+    setSuggestions({});
+    setAppliedBullets(new Set());
+    setRewriteResult(null);
+    setApplySuccess("");
+    setKeywordSuggestions({});
+    setBulletFixes({});
+    setOpenFixBullet(null);
+  }
+
+  function openAnalysis(past) {
+    if (analysis && past._id === analysis._id) return;
+    resetAnalysisState();
+    setAnalysis(past);
+    setJobDescription(past.jdText);
+  }
+
   useEffect(() => {
-    api.getResume(id, token).then((data) => setResume(data.resume)).catch((err) => setError(err.message));
+    api
+      .getResume(id, token)
+      .then((data) => {
+        setResume(data.resume);
+        // Reopen the most recent analysis, so a refresh or a trip back from
+        // the editor doesn't throw away results that are already saved.
+        const past = data.resume.atsAnalyses || [];
+        if (past.length > 0) openAnalysis(past[past.length - 1]);
+      })
+      .catch((err) => setError(err.message));
     loadBulletQuality();
   }, [id]);
 
   async function handleAnalyze(e) {
     e.preventDefault();
     if (!jobDescription.trim()) return;
-    setError("");
+    resetAnalysisState();
     setAnalyzing(true);
-    setSuggestions({});
-    setRewriteResult(null);
-    setApplySuccess("");
-    setKeywordSuggestions({});
     try {
       const data = await api.analyzeResume(id, jobDescription, token);
       setAnalysis(data.analysis);
+      setResume((prev) =>
+        prev ? { ...prev, atsAnalyses: [...(prev.atsAnalyses || []), data.analysis] } : prev
+      );
     } catch (err) {
       setError(err.message);
     } finally {
@@ -101,10 +137,12 @@ export function AnalyzePage() {
     setApplySuccess("");
     setRewritingResume(true);
     try {
+      // An older analysis can list bullets that have since been rewritten;
+      // only send the ones that still exist in the resume.
       const data = await api.rewriteResumeForJD(
         id,
         jobDescription,
-        analysis.weakBullets,
+        analysis.weakBullets.filter((bullet) => locateBulletInResume(resume, bullet.text)),
         analysis.missingKeywords,
         token
       );
@@ -372,6 +410,8 @@ export function AnalyzePage() {
         </p>
       )}
 
+      <PastAnalyses analyses={resume?.atsAnalyses} currentId={analysis?._id} onOpen={openAnalysis} />
+
       <AnimatePresence>
         {analysis && (
           <motion.div
@@ -381,7 +421,21 @@ export function AnalyzePage() {
             className="space-y-6"
           >
             <div className={`p-5 ${neoCardClass}`}>
-              <h2 className="font-bold text-slate-900 dark:text-slate-100 mb-3">ATS Score</h2>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
+                <h2 className="font-bold text-slate-900 dark:text-slate-100">ATS Score</h2>
+                {analysis.createdAt && (
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    Analyzed {formatAnalysisDate(analysis.createdAt)}
+                  </span>
+                )}
+              </div>
+              {resume?.updatedAt &&
+                analysis.createdAt &&
+                new Date(resume.updatedAt) - new Date(analysis.createdAt) > CHANGED_SINCE_MS && (
+                  <p className="text-xs font-medium text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-[3px] border-amber-600 dark:border-amber-500 rounded-2xl px-3 py-2 mb-3">
+                    Your resume may have changed since this analysis. Click Analyze to score it again.
+                  </p>
+                )}
               <div className="flex flex-wrap items-center gap-8">
                 <ScoreGauge value={analysis.matchScore} />
                 {analysis.categories && (
@@ -509,6 +563,10 @@ export function AnalyzePage() {
 
                       {appliedBullets.has(bullet.text) ? (
                         <BulletRewriteCard applied />
+                      ) : resume && !locateBulletInResume(resume, bullet.text) ? (
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                          Already changed in your resume.
+                        </p>
                       ) : suggestions[i] ? (
                         <BulletRewriteCard
                           original={bullet.text}
