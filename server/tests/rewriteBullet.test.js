@@ -1,7 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
 const rewriteBullet = require("../services/rewriteBullet");
-const { knownSkillsFromResume } = rewriteBullet;
 const { connect, closeDatabase, clearDatabase } = require("./testDb");
 
 beforeAll(connect);
@@ -27,53 +26,20 @@ function mockClaudeFetch() {
   return prompts;
 }
 
-function skillsBlock(prompt) {
-  const match = prompt.match(/Their skills \(from their resume\):\n"""\n([\s\S]*?)\n"""/);
-  return match ? match[1] : null;
-}
-
-describe("knownSkillsFromResume", () => {
-  it("combines the skills section with every project's tech stack", () => {
-    const resume = {
-      skills: ["JavaScript", "React"],
-      projects: [{ techStack: ["Node.js", "MongoDB"] }, { techStack: ["Express"] }],
-    };
-
-    expect(knownSkillsFromResume(resume)).toEqual(["JavaScript", "React", "Node.js", "MongoDB", "Express"]);
-  });
-
-  it("drops duplicates regardless of case, and blank entries", () => {
-    const resume = { skills: ["React", " react ", ""], projects: [{ techStack: ["REACT", "Git"] }] };
-
-    expect(knownSkillsFromResume(resume)).toEqual(["React", "Git"]);
-  });
-
-  it("returns an empty list for a resume with no skills or projects", () => {
-    expect(knownSkillsFromResume({})).toEqual([]);
-    expect(knownSkillsFromResume(undefined)).toEqual([]);
-  });
-});
-
 describe("rewriteBullet prompt", () => {
-  it("includes the person's skills so the rewrite can't borrow tools from the job description", async () => {
+  it("only allows tools the original bullet names", async () => {
     const prompts = mockClaudeFetch();
 
-    await rewriteBullet("Fixed bugs", "Needs TypeScript and Jest", ["JavaScript", "React"]);
+    await rewriteBullet("Fixed bugs", "Needs TypeScript and Jest");
 
-    expect(skillsBlock(prompts[0])).toBe("JavaScript, React");
-    expect(prompts[0]).toMatch(/Name a tool, language or framework only if it appears in the original bullet or in their skills list/);
-  });
-
-  it("says no skills are listed when the resume has none", async () => {
-    const prompts = mockClaudeFetch();
-
-    await rewriteBullet("Fixed bugs", "Needs TypeScript");
-
-    expect(skillsBlock(prompts[0])).toBe("(none listed)");
+    expect(prompts[0]).toMatch(/Keep every tool, language, framework and library the original bullet names/);
+    expect(prompts[0]).toMatch(/Name any tool, language, framework or library the original bullet doesn't name/);
   });
 });
 
-describe("rewrite routes send the resume's own skills", () => {
+// The rewrite can't tell which of the person's skills they used for a given
+// piece of work, so the resume's skills must never reach the prompt at all.
+describe("rewrite routes don't send the resume's skills to Claude", () => {
   async function setup() {
     const reg = await request(app)
       .post("/api/auth/register")
@@ -88,11 +54,13 @@ describe("rewrite routes send the resume's own skills", () => {
       .patch(`/api/resumes/${id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
-        skills: ["JavaScript", "React"],
-        projects: [{ name: "Tracker", techStack: ["MongoDB"], bullets: ["Added login and charts"] }],
+        skills: ["Tailwind", "MongoDB"],
+        projects: [{ name: "Tracker", techStack: ["Redis"], bullets: ["Added login and charts"] }],
       });
     return { token, id };
   }
+
+  const resumeOnlySkills = /Tailwind|MongoDB|Redis/;
 
   it("POST /:id/rewrite-bullet", async () => {
     const { token, id } = await setup();
@@ -104,7 +72,7 @@ describe("rewrite routes send the resume's own skills", () => {
       .send({ bulletText: "Added login and charts", jobDescription: "Needs TypeScript" });
 
     expect(res.status).toBe(200);
-    expect(skillsBlock(prompts[0])).toBe("JavaScript, React, MongoDB");
+    expect(prompts[0]).not.toMatch(resumeOnlySkills);
   });
 
   it("POST /:id/rewrite-resume", async () => {
@@ -121,6 +89,6 @@ describe("rewrite routes send the resume's own skills", () => {
       });
 
     expect(res.status).toBe(200);
-    expect(skillsBlock(prompts[0])).toBe("JavaScript, React, MongoDB");
+    expect(prompts[0]).not.toMatch(resumeOnlySkills);
   });
 });

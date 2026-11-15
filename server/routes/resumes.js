@@ -7,7 +7,6 @@ const extractResumeData = require("../services/extractResumeData");
 const scoreResumeAgainstJD = require("../services/scoreResumeAgainstJD");
 const scoreResumeCategories = require("../services/scoreResumeCategories");
 const rewriteBullet = require("../services/rewriteBullet");
-const { knownSkillsFromResume } = rewriteBullet;
 const rewriteResumeForJD = require("../services/rewriteResumeForJD");
 const suggestKeywordPlacement = require("../services/suggestKeywordPlacement");
 const { analyzeBullet } = require("../services/resumeHeuristics");
@@ -118,7 +117,7 @@ router.post("/:id/rewrite-bullet", requireAuth, heavyLimiter, async (req, res) =
       return res.status(404).json({ error: "Resume not found" });
     }
 
-    const suggestion = await rewriteBullet(bulletText, jobDescription, knownSkillsFromResume(resume));
+    const suggestion = await rewriteBullet(bulletText, jobDescription);
     res.json({ suggestion });
   } catch (err) {
     res.status(500).json({ error: err.message || "Something went wrong rewriting the bullet" });
